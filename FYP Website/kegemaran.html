@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECOTHRIFT — Kegemaran Saya</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --cream: #F5F0E8; --sand: #E8DFD0; --clay: #C4A882;
+    --rust: #B85C3A; --forest: #2D4A3E; --ink: #1A1A18;
+    --smoke: #7A7568; --white: #FEFCF8;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.4rem 3rem;
+    background: rgba(245,240,232,0.88); backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(196,168,130,0.25);
+  }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 900; letter-spacing: -0.03em; color: var(--ink); text-decoration: none; }
+  .nav-logo span { color: var(--rust); font-style: italic; }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a { font-size: 0.85rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--smoke); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-links a.active { color: var(--ink); border-bottom: 2px solid var(--rust); padding-bottom: 2px; }
+  .nav-actions { display: flex; align-items: center; gap: 1.2rem; }
+  .btn-nav { background: var(--ink); color: var(--cream); border: none; padding: 0.65rem 1.4rem; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: background 0.2s; border-radius: 2px; text-decoration: none; display: inline-block; }
+  .btn-nav:hover { background: var(--rust); }
+  .cart-icon { position: relative; cursor: pointer; font-size: 1.4rem; }
+  .cart-badge { position: absolute; top: -6px; right: -8px; background: var(--rust); color: white; width: 16px; height: 16px; border-radius: 50%; font-size: 0.65rem; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+
+  /* PAGE HEADER */
+  .page-header {
+    padding: 8rem 5rem 3rem;
+    background: var(--white);
+    border-bottom: 1px solid rgba(196,168,130,0.2);
+  }
+  .breadcrumb { display: flex; align-items: center; gap: 0.5rem; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--smoke); margin-bottom: 1.5rem; }
+  .breadcrumb a { color: var(--smoke); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--ink); }
+  .breadcrumb span { color: var(--clay); }
+  .page-header-inner { display: flex; align-items: flex-end; justify-content: space-between; }
+  .page-title { font-family: 'Playfair Display', serif; font-size: 3.5rem; font-weight: 900; letter-spacing: -0.03em; line-height: 1; }
+  .page-title em { font-style: italic; color: var(--rust); }
+  .fav-count { font-size: 0.88rem; color: var(--smoke); }
+  .clear-all-btn {
+    background: transparent; border: 1px solid rgba(196,168,130,0.5);
+    padding: 0.6rem 1.2rem; border-radius: 2px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.78rem;
+    font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+    color: var(--smoke); cursor: pointer; transition: all 0.2s;
+    display: none;
+  }
+  .clear-all-btn:hover { border-color: var(--rust); color: var(--rust); }
+
+  /* SORT BAR */
+  .sort-bar {
+    padding: 1rem 5rem;
+    background: var(--white);
+    border-bottom: 1px solid rgba(196,168,130,0.15);
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .sort-select {
+    padding: 0.5rem 1rem; background: var(--sand);
+    border: 1px solid rgba(196,168,130,0.4); border-radius: 2px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+    color: var(--ink); outline: none; cursor: pointer;
+  }
+
+  /* MAIN CONTENT */
+  .main { padding: 3rem 5rem 5rem; min-height: 60vh; }
+
+  /* EMPTY STATE */
+  .empty-state {
+    display: none;
+    flex-direction: column; align-items: center; justify-content: center;
+    padding: 6rem 2rem; text-align: center;
+  }
+  .empty-state.show { display: flex; }
+  .empty-icon { font-size: 5rem; margin-bottom: 1.5rem; opacity: 0.5; }
+  .empty-title { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 700; margin-bottom: 0.75rem; color: var(--smoke); }
+  .empty-sub { font-size: 0.95rem; font-weight: 300; color: var(--smoke); line-height: 1.7; max-width: 360px; margin-bottom: 2rem; }
+  .empty-btn {
+    background: var(--ink); color: var(--cream); text-decoration: none;
+    padding: 0.9rem 2.5rem; border-radius: 2px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+    font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+    transition: background 0.2s;
+  }
+  .empty-btn:hover { background: var(--rust); }
+
+  /* PRODUCT GRID */
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 2rem;
+  }
+
+  .product-card { cursor: pointer; transition: transform 0.25s; animation: fadeUp 0.4s ease both; }
+  .product-card:hover { transform: translateY(-4px); }
+
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+
+  .product-img {
+    background: var(--sand); border-radius: 4px;
+    aspect-ratio: 3/4; position: relative; overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 4rem; margin-bottom: 1rem; transition: background 0.3s;
+  }
+  .product-card:hover .product-img { background: #DDD5C4; }
+
+  .remove-btn {
+    position: absolute; top: 10px; right: 10px;
+    width: 32px; height: 32px; background: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; border: none; font-size: 1rem;
+    color: var(--rust); transition: transform 0.15s, background 0.15s;
+    opacity: 0;
+  }
+  .product-card:hover .remove-btn { opacity: 1; }
+  .remove-btn:hover { transform: scale(1.15); background: #fde8e2; }
+
+  .add-cart-btn {
+    position: absolute; bottom: 0; left: 0; right: 0;
+    background: rgba(26,26,24,0.88); color: var(--cream);
+    border: none; padding: 0.75rem;
+    font-family: 'DM Sans', sans-serif; font-size: 0.78rem;
+    font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer; transform: translateY(100%);
+    transition: transform 0.25s; backdrop-filter: blur(4px);
+  }
+  .product-card:hover .add-cart-btn { transform: translateY(0); }
+
+  .product-condition {
+    display: inline-block; font-size: 0.65rem; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--forest); background: rgba(45,74,62,0.1);
+    padding: 0.2rem 0.55rem; border-radius: 2px; margin-bottom: 0.5rem;
+  }
+  .product-name { font-size: 0.95rem; font-weight: 500; color: var(--ink); margin-bottom: 0.3rem; cursor: pointer; }
+  .product-name:hover { text-decoration: underline; text-underline-offset: 3px; }
+  .product-price { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; color: var(--ink); }
+  .product-price .original { font-family: 'DM Sans', sans-serif; font-size: 0.78rem; font-weight: 400; color: var(--smoke); text-decoration: line-through; margin-left: 0.4rem; }
+  .product-price .save-pct { font-family: 'DM Sans', sans-serif; font-size: 0.72rem; font-weight: 500; color: var(--rust); margin-left: 0.4rem; }
+
+  .saved-date { font-size: 0.72rem; color: var(--smoke); margin-top: 0.3rem; }
+
+  /* FOOTER */
+  footer { background: var(--ink); padding: 1.5rem 5rem; margin-top: 4rem; }
+  .footer-bottom { display: flex; align-items: center; justify-content: space-between; }
+  .footer-copy { font-size: 0.78rem; color: rgba(245,240,232,0.3); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="thrift-fashion.html">ECO<span>THRIFT</span></a>
+  <ul class="nav-links">
+    <li><a href="thrift-fashion.html">Laman Utama</a></li>
+    <li><a href="ecothrift-clothes.html">Pakaian</a></li>
+    <li><a href="ecothrift-pants.html">Seluar</a></li>
+    <li><a href="ecothrift-accessories.html">Aksesori</a></li>
+    <li><a href="ecothrift-sell.html">Jual</a></li>
+    <li><a href="kegemaran.html" class="active">❤ Kegemaran</a></li>
+  </ul>
+  <div class="nav-actions">
+    <div class="cart-icon">🛍<div class="cart-badge">3</div></div>
+    <a href="signin.html" class="btn-nav" id="nav-signin-btn">Log Masuk</a>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="page-header">
+  <div class="breadcrumb">
+    <a href="thrift-fashion.html">Laman Utama</a>
+    <span>›</span>
+    <span style="color: var(--ink);">Kegemaran Saya</span>
+  </div>
+  <div class="page-header-inner">
+    <div>
+      <h1 class="page-title">Senarai <em>Kegemaran</em></h1>
+      <p class="fav-count" id="fav-count" style="margin-top:0.5rem;"></p>
+    </div>
+    <button class="clear-all-btn" id="clear-all-btn" onclick="clearAll()">Kosongkan Semua</button>
+  </div>
+</div>
+
+<!-- SORT BAR -->
+<div class="sort-bar" id="sort-bar" style="display:none;">
+  <span style="font-size:0.82rem; color:var(--smoke);">Susun mengikut:</span>
+  <select class="sort-select" id="sort-select" onchange="renderWishlist()">
+    <option value="recent">Terbaru Disimpan</option>
+    <option value="price-asc">Harga: Rendah ke Tinggi</option>
+    <option value="price-desc">Harga: Tinggi ke Rendah</option>
+    <option value="name">Nama A–Z</option>
+  </select>
+</div>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- EMPTY STATE -->
+  <div class="empty-state" id="empty-state">
+    <div class="empty-icon">🤍</div>
+    <div class="empty-title">Tiada kegemaran lagi</div>
+    <p class="empty-sub">Simpan produk yang anda suka semasa melayari kedai. Klik ikon ♡ pada mana-mana produk untuk menyimpannya di sini.</p>
+    <a href="thrift-fashion.html" class="empty-btn">Mula Beli-belah</a>
+  </div>
+
+  <!-- PRODUCT GRID -->
+  <div class="product-grid" id="fav-grid"></div>
+
+</div>
+
+<footer>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Ecothrift. Hak cipta terpelihara.</div>
+    <div class="footer-copy">Privasi · Terma · Kuki</div>
+  </div>
+</footer>
+
+<script src="ecothrift.js"></script>
+<script src="location-selector.js"></script>
+<script>
+  // ── ALL CATALOGUE ITEMS (mirrors product listings across all pages) ──────
+  const CATALOGUE = [
+    // Clothes
+    { name: 'Blazer Bulu Oversaiz',       emoji: '🧥', price: 145, original: 520, condition: 'Seperti Baru', bg: '#E8DFD0' },
+    { name: 'Gaun Midi Balut',            emoji: '👗', price: 88,  original: 310, condition: 'Cemerlang',    bg: '#D4CEC4' },
+    { name: 'Baju Butang Linen',          emoji: '👔', price: 75,  original: 260, condition: 'Seperti Baru', bg: '#E0D8CC' },
+    { name: 'Sweater Kait Tebal',         emoji: '🧣', price: 110, original: 390, condition: 'Cemerlang',    bg: '#CCCABA' },
+    { name: 'Kot Parit',                  emoji: '🧤', price: 190, original: 650, condition: 'Baik',         bg: '#D8D0C4' },
+    { name: 'Baju-T Grafik — Cetakan Vintaj', emoji: '👕', price: 32, original: 95, condition: 'Seperti Baru', bg: '#C8C8BC' },
+    { name: 'Skirt Maxi Bunga',           emoji: '🥻', price: 68,  original: 220, condition: 'Cemerlang',    bg: '#E4D5C0' },
+    { name: 'Jaket Denim — Basuh',        emoji: '🧥', price: 95,  original: 299, condition: 'Baik',         bg: '#D0C8BE' },
+    { name: 'Gaun Slip Cami',             emoji: '👘', price: 55,  original: 180, condition: 'Seperti Baru', bg: '#DCD4C8' },
+    // Pants
+    { name: "Levi's 501 Straight Vintaj", emoji: '👖', price: 120, original: 380, condition: 'Seperti Baru', bg: '#E8DFD0' },
+    { name: 'Seluar Linen Kaki Lebar',    emoji: '👖', price: 65,  original: 189, condition: 'Cemerlang',    bg: '#D4CEC4' },
+    { name: 'Seluar Sigaret Tersuai',     emoji: '👖', price: 95,  original: 320, condition: 'Seperti Baru', bg: '#E0D8CC' },
+    { name: 'Seluar Pendek Bermuda — Khaki', emoji: '🩳', price: 42, original: 129, condition: 'Cemerlang', bg: '#CCCABA' },
+    { name: 'Seluar Kargo Utiliti',       emoji: '👖', price: 58,  original: 180, condition: 'Baik',         bg: '#D8D0C4' },
+    { name: 'Chino Slim Fit — Biru Tentera', emoji: '👖', price: 80, original: 270, condition: 'Seperti Baru', bg: '#C8C8BC' },
+    { name: 'Jean Kaki Tong — Ecru',      emoji: '👖', price: 88,  original: 299, condition: 'Cemerlang',    bg: '#E4D5C0' },
+    { name: 'Seluar Pendek Denim Potong', emoji: '🩳', price: 48,  original: 150, condition: 'Baik',         bg: '#D0C8BE' },
+    { name: 'Seluar Lebar Berlipat',      emoji: '👖', price: 105, original: 340, condition: 'Seperti Baru', bg: '#DCD4C8' },
+    // Accessories
+    { name: 'Beg Bahu Kulit',             emoji: '👜', price: 175, original: 550, condition: 'Seperti Baru', bg: '#E8DFD0' },
+    { name: 'Skaf Sutera — Cetakan Bunga',emoji: '🧣', price: 38,  original: 120, condition: 'Cemerlang',    bg: '#D4CEC4' },
+    { name: 'Tali Pinggang Kulit — Kamel',emoji: '⌚', price: 95,  original: 290, condition: 'Seperti Baru', bg: '#E0D8CC' },
+    { name: 'Beg Tote Kanvas — Semula Jadi', emoji: '🎒', price: 55, original: 185, condition: 'Cemerlang', bg: '#CCCABA' },
+    { name: 'Cermin Mata Hitam Tempurung Kura-kura', emoji: '🕶️', price: 48, original: 149, condition: 'Seperti Baru', bg: '#D8D0C4' },
+    { name: 'Topi Baldi Anyaman',         emoji: '👒', price: 42,  original: 130, condition: 'Baik',         bg: '#C8C8BC' },
+    { name: 'Set Anting-anting Gelung Emas', emoji: '💍', price: 28, original: 89, condition: 'Cemerlang',   bg: '#E4D5C0' },
+    { name: 'Dompet Zip Sekeliling',      emoji: '👛', price: 65,  original: 210, condition: 'Seperti Baru', bg: '#D0C8BE' },
+    { name: 'Topi Baseball Vintaj',       emoji: '🧢', price: 32,  original: 99,  condition: 'Cemerlang',    bg: '#DCD4C8' },
+  ];
+
+  // ── WISHLIST STATE ───────────────────────────────────────────────────────
+  function getWishlist() {
+    return JSON.parse(localStorage.getItem('eco_wishlist') || '[]');
+  }
+  function getWishlistDates() {
+    return JSON.parse(localStorage.getItem('eco_wishlist_dates') || '{}');
+  }
+  function removeFromWishlist(name) {
+    let wl = getWishlist();
+    let dates = getWishlistDates();
+    wl = wl.filter(n => n !== name);
+    delete dates[name];
+    localStorage.setItem('eco_wishlist', JSON.stringify(wl));
+    localStorage.setItem('eco_wishlist_dates', JSON.stringify(dates));
+  }
+
+  // ── RENDER ───────────────────────────────────────────────────────────────
+  function renderWishlist() {
+    const wishlist = getWishlist();
+    const dates    = getWishlistDates();
+    const grid     = document.getElementById('fav-grid');
+    const empty    = document.getElementById('empty-state');
+    const countEl  = document.getElementById('fav-count');
+    const clearBtn = document.getElementById('clear-all-btn');
+    const sortBar  = document.getElementById('sort-bar');
+    const sortVal  = document.getElementById('sort-select')?.value || 'recent';
+
+    grid.innerHTML = '';
+
+    if (wishlist.length === 0) {
+      empty.classList.add('show');
+      countEl.textContent = '';
+      clearBtn.style.display = 'none';
+      sortBar.style.display = 'none';
+      return;
+    }
+
+    empty.classList.remove('show');
+    countEl.textContent = wishlist.length + ' produk disimpan';
+    clearBtn.style.display = 'inline-block';
+    sortBar.style.display = 'flex';
+
+    // Match wishlist names to catalogue items; unknown items get a placeholder
+    let items = wishlist.map(name => {
+      const found = CATALOGUE.find(c => c.name === name);
+      return found
+        ? { ...found, savedAt: dates[name] || Date.now() }
+        : { name, emoji: '🛍', price: 0, original: 0, condition: 'Tidak Diketahui', bg: '#E8DFD0', savedAt: dates[name] || Date.now() };
+    });
+
+    // Sort
+    if (sortVal === 'price-asc')  items.sort((a,b) => a.price - b.price);
+    if (sortVal === 'price-desc') items.sort((a,b) => b.price - a.price);
+    if (sortVal === 'name')       items.sort((a,b) => a.name.localeCompare(b.name));
+    if (sortVal === 'recent')     items.sort((a,b) => b.savedAt - a.savedAt);
+
+    items.forEach((item, i) => {
+      const pct  = item.original ? Math.round((1 - item.price / item.original) * 100) : 0;
+      const date = new Date(item.savedAt).toLocaleDateString('ms-MY', { day:'numeric', month:'short', year:'numeric' });
+      const card = document.createElement('div');
+      card.className = 'product-card';
+      card.style.animationDelay = (i * 0.05) + 's';
+      card.innerHTML = `
+        <div class="product-img" style="background:${item.bg};">
+          <span>${item.emoji}</span>
+          <button class="remove-btn" title="Buang daripada kegemaran" onclick="removeFav('${item.name.replace(/'/g,"\\'")}', this)">♥</button>
+          <button class="add-cart-btn" onclick="addToCartFromFav('${item.name.replace(/'/g,"\\'")}', ${item.price})">+ Tambah ke Troli</button>
+        </div>
+        <div class="product-condition">${item.condition}</div>
+        <div class="product-name" onclick="quickViewFav('${item.name.replace(/'/g,"\\'")}')">${item.name}</div>
+        <div class="product-price">
+          RM ${item.price}
+          ${item.original ? `<span class="original">RM ${item.original}</span>` : ''}
+          ${pct ? `<span class="save-pct">−${pct}%</span>` : ''}
+        </div>
+        <div class="saved-date">Disimpan pada ${date}</div>`;
+      grid.appendChild(card);
+    });
+  }
+
+  // ── ACTIONS ──────────────────────────────────────────────────────────────
+  function removeFav(name, btn) {
+    removeFromWishlist(name);
+    const card = btn.closest('.product-card');
+    card.style.transition = 'opacity 0.3s, transform 0.3s';
+    card.style.opacity = '0';
+    card.style.transform = 'scale(0.9)';
+    setTimeout(() => { card.remove(); renderWishlist(); }, 300);
+    typeof ECO !== 'undefined' && ECO.toast('Dibuang daripada kegemaran', 'info');
+  }
+
+  function addToCartFromFav(name, price) {
+    typeof ECO !== 'undefined' && ECO.addToCart(name, price, 'M');
+  }
+
+  function quickViewFav(name) {
+    const item = CATALOGUE.find(c => c.name === name);
+    if (!item) return;
+    // Build a minimal product-card-like element for ECO.quickView
+    const fake = document.createElement('div');
+    fake.innerHTML = `
+      <div class="product-img" style="background:${item.bg};"><span>${item.emoji}</span></div>
+      <div class="product-condition">${item.condition}</div>
+      <div class="product-name">${item.name}</div>
+      <div class="product-price">RM ${item.price}<span class="original">RM ${item.original}</span></div>`;
+    typeof ECO !== 'undefined' && ECO.quickView(fake);
+  }
+
+  function clearAll() {
+    if (!confirm('Kosongkan semua kegemaran?')) return;
+    localStorage.removeItem('eco_wishlist');
+    localStorage.removeItem('eco_wishlist_dates');
+    renderWishlist();
+    typeof ECO !== 'undefined' && ECO.toast('Senarai kegemaran dikosongkan', 'info');
+  }
+
+  // ── INIT ─────────────────────────────────────────────────────────────────
+  // Stamp save dates for any existing wishlist items that don't have one yet
+  (function stampDates() {
+    const wl    = getWishlist();
+    const dates = getWishlistDates();
+    let changed = false;
+    wl.forEach(name => {
+      if (!dates[name]) { dates[name] = Date.now(); changed = true; }
+    });
+    if (changed) localStorage.setItem('eco_wishlist_dates', JSON.stringify(dates));
+  })();
+
+  // Patch ECO.toggleWishlist to also stamp dates
+  document.addEventListener('DOMContentLoaded', () => {
+    renderWishlist();
+    if (typeof ECO !== 'undefined') {
+      const origToggle = ECO.toggleWishlist.bind(ECO);
+      ECO.toggleWishlist = function(name, btn) {
+        origToggle(name, btn);
+        const dates = getWishlistDates();
+        const wl    = getWishlist();
+        if (wl.includes(name) && !dates[name]) {
+          dates[name] = Date.now();
+          localStorage.setItem('eco_wishlist_dates', JSON.stringify(dates));
+        }
+        renderWishlist();
+      };
+    }
+  });
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="auth-nav.js"></script>
+</body>
+</html>
