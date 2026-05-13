@@ -1,0 +1,171 @@
+/* ── ECOTHRIFT MOBILE RESPONSIVE ─────────────────────────────────────────── */
+
+@media (max-width: 768px) {
+
+  /* ── NAV ── */
+  nav {
+    padding: 1rem 1.2rem !important;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .nav-links {
+    display: none !important;
+  }
+  .nav-actions {
+    gap: 0.6rem !important;
+  }
+  .btn-nav {
+    padding: 0.5rem 0.9rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  /* ── HERO ── */
+  .sell-hero,
+  .hero,
+  section[style*="grid-template-columns: 1fr 1fr"],
+  .listing-section {
+    grid-template-columns: 1fr !important;
+    padding: 6rem 1.5rem 3rem !important;
+    gap: 2rem !important;
+  }
+  .hero-title,
+  .sell-hero h1 {
+    font-size: 2.2rem !important;
+  }
+  .earnings-card {
+    display: none;
+  }
+
+  /* ── PRODUCT GRID ── */
+  .product-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 0.75rem !important;
+    padding: 0 0.75rem !important;
+  }
+  .product-name {
+    font-size: 0.8rem !important;
+  }
+  .product-price {
+    font-size: 0.85rem !important;
+  }
+  .product-seller {
+    font-size: 0.7rem !important;
+  }
+
+  /* ── FILTER SIDEBAR ── */
+  .shop-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .filter-sidebar {
+    display: none !important;
+  }
+  .shop-header {
+    padding: 5rem 1rem 1rem !important;
+  }
+  .filter-bar {
+    padding: 0.75rem 1rem !important;
+    flex-wrap: wrap;
+    gap: 0.5rem !important;
+  }
+
+  /* ── SELL FORM ── */
+  .form-card {
+    padding: 1.5rem !important;
+  }
+  .form-row {
+    grid-template-columns: 1fr !important;
+  }
+  .steps-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 1rem !important;
+  }
+  .faq-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .payout-section {
+    padding: 3rem 1.5rem !important;
+  }
+  .cta-banner {
+    padding: 3rem 1.5rem !important;
+  }
+  .cta-title {
+    font-size: 1.8rem !important;
+  }
+
+  /* ── SECTION PADDING ── */
+  .section {
+    padding: 3rem 1.5rem !important;
+  }
+  .section-title {
+    font-size: 1.8rem !important;
+  }
+  footer {
+    padding: 2.5rem 1.5rem 1.5rem !important;
+  }
+
+  /* ── MODAL ── */
+  #eco-modal-box {
+    padding: 1.5rem !important;
+    width: 95% !important;
+  }
+  #eco-modal-box > div > div:first-child {
+    display: none !important;
+  }
+  #eco-modal-box > div {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── SIGNIN ── */
+  .signin-box {
+    padding: 2rem 1.5rem !important;
+    margin: 1rem !important;
+  }
+
+  /* ── CHAT ── */
+  .chat-layout {
+    grid-template-columns: 1fr !important;
+  }
+  .conv-list {
+    display: none !important;
+  }
+  .chat-main {
+    border-left: none !important;
+  }
+
+  /* ── ADMIN ── */
+  .listing-card {
+    grid-template-columns: 60px 1fr !important;
+    gap: 0.75rem !important;
+  }
+  .listing-actions {
+    grid-column: 1 / -1 !important;
+    flex-direction: row !important;
+    flex-wrap: wrap !important;
+  }
+  .admin-stats {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* ── THRIFT FASHION HOME ── */
+  .hero-grid,
+  .about-grid,
+  .brands-section {
+    grid-template-columns: 1fr !important;
+    padding: 5rem 1.5rem 2rem !important;
+  }
+  .ticker-wrap {
+    font-size: 0.7rem !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .product-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .steps-grid {
+    grid-template-columns: 1fr !important;
+  }
+  .hero-title {
+    font-size: 1.8rem !important;
+  }
+}
