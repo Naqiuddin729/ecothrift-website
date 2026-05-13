@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECOTHRIFT — Jual Your Pakaian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-storage-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init('Ud3tVlqN3j-UnT-dD');</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --cream: #F5F0E8; --sand: #E8DFD0; --clay: #C4A882;
+    --rust: #B85C3A; --forest: #2D4A3E; --ink: #1A1A18;
+    --smoke: #7A7568; --white: #FEFCF8;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); overflow-x: hidden; }
+
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.4rem 3rem;
+    background: rgba(245,240,232,0.88); backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(196,168,130,0.25);
+  }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 900; letter-spacing: -0.03em; color: var(--ink); text-decoration: none; }
+  .nav-logo span { color: var(--rust); font-style: italic; }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a { font-size: 0.85rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--smoke); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-links a.active { color: var(--ink); border-bottom: 2px solid var(--rust); padding-bottom: 2px; }
+  .nav-actions { display: flex; align-items: center; gap: 1.2rem; }
+  .btn-nav { background: var(--ink); color: var(--cream); border: none; padding: 0.65rem 1.4rem; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; transition: background 0.2s, transform 0.15s; border-radius: 2px; }
+  .btn-nav:hover { background: var(--rust); transform: translateY(-1px); }
+  .cart-icon { position: relative; cursor: pointer; color: var(--ink); font-size: 1.4rem; }
+  .cart-badge { position: absolute; top: -6px; right: -8px; background: var(--rust); color: white; width: 16px; height: 16px; border-radius: 50%; font-size: 0.65rem; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+
+  .sell-hero {
+    min-height: 72vh; padding: 10rem 5rem 6rem;
+    background: var(--forest);
+    display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center;
+    position: relative; overflow: hidden;
+  }
+  .sell-hero::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 80% 50%, rgba(196,168,130,0.12) 0%, transparent 70%); }
+  .hero-tag { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--clay); margin-bottom: 1.25rem; display: flex; align-items: center; gap: 0.5rem; }
+  .hero-tag::before { content: ''; width: 24px; height: 1px; background: var(--clay); }
+  .hero-title { font-family: 'Playfair Display', serif; font-size: clamp(3rem, 4.5vw, 4.5rem); font-weight: 900; line-height: 1.05; letter-spacing: -0.02em; color: var(--white); margin-bottom: 1.5rem; }
+  .hero-title em { font-style: italic; color: var(--clay); }
+  .hero-sub { font-size: 1rem; font-weight: 300; line-height: 1.8; color: rgba(254,252,248,0.6); max-width: 420px; margin-bottom: 2.5rem; }
+  .hero-cta { display: flex; gap: 1rem; align-items: center; }
+  .btn-primary { background: var(--rust); color: var(--cream); border: none; padding: 1rem 2.5rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.25s; display: inline-block; text-decoration: none; }
+  .btn-primary:hover { background: var(--clay); transform: translateY(-2px); }
+  .btn-outline { background: transparent; color: var(--cream); border: 1px solid rgba(254,252,248,0.3); padding: 1rem 2rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.25s; }
+  .btn-outline:hover { border-color: var(--clay); color: var(--clay); }
+
+  .earnings-card { background: rgba(254,252,248,0.06); border: 1px solid rgba(196,168,130,0.25); border-radius: 6px; padding: 2rem; backdrop-filter: blur(8px); }
+  .earnings-title { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--clay); margin-bottom: 1.5rem; }
+  .earnings-item { display: flex; justify-content: space-between; align-items: center; padding: 0.9rem 0; border-bottom: 1px solid rgba(196,168,130,0.15); }
+  .earnings-item:last-child { border-bottom: none; }
+  .item-name { font-size: 0.88rem; color: rgba(254,252,248,0.7); }
+  .item-values { text-align: right; }
+  .item-sell { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: var(--white); }
+  .item-retail { font-size: 0.72rem; color: rgba(196,168,130,0.7); text-decoration: line-through; }
+  .item-payout { font-size: 0.72rem; font-weight: 500; color: #6DBF8A; margin-top: 0.1rem; }
+  .earnings-footer { margin-top: 1.25rem; text-align: center; font-size: 0.78rem; color: rgba(254,252,248,0.4); }
+
+  .section { padding: 6rem 5rem; }
+  .section-tag { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.15em; text-transform: uppercase; color: var(--rust); margin-bottom: 0.75rem; }
+  .section-title { font-family: 'Playfair Display', serif; font-size: 2.6rem; font-weight: 700; line-height: 1.15; letter-spacing: -0.02em; margin-bottom: 1rem; }
+  .section-title em { font-style: italic; color: var(--rust); }
+  .section-sub { font-size: 1rem; font-weight: 300; line-height: 1.8; color: var(--smoke); max-width: 500px; }
+
+  .steps-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 2rem; margin-top: 4rem; }
+  .step-card { padding: 2rem 1.5rem; background: var(--white); border-radius: 4px; position: relative; transition: transform 0.25s; }
+  .step-card:hover { transform: translateY(-4px); }
+  .step-num { font-family: 'Playfair Display', serif; font-size: 3.5rem; font-weight: 900; color: rgba(196,168,130,0.2); position: absolute; top: 1rem; right: 1.25rem; line-height: 1; }
+  .step-icon { font-size: 2rem; margin-bottom: 1rem; }
+  .step-title { font-family: 'Playfair Display', serif; font-size: 1.15rem; font-weight: 700; margin-bottom: 0.6rem; }
+  .step-desc { font-size: 0.85rem; font-weight: 300; line-height: 1.75; color: var(--smoke); }
+
+  .listing-section { background: var(--sand); padding: 6rem 5rem; display: grid; grid-template-columns: 1fr 1.4fr; gap: 5rem; align-items: start; }
+  .form-card { background: var(--white); border-radius: 6px; padding: 2.5rem; }
+  .form-title { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 700; margin-bottom: 0.4rem; }
+  .form-sub { font-size: 0.85rem; color: var(--smoke); margin-bottom: 2rem; line-height: 1.6; }
+  .form-group { margin-bottom: 1.25rem; }
+  .form-label { font-size: 0.75rem; font-weight: 500; letter-spacing: 0.1em; text-transform: uppercase; color: var(--smoke); margin-bottom: 0.5rem; display: block; }
+  .form-input, .form-select, .form-textarea { width: 100%; padding: 0.85rem 1rem; background: var(--sand); border: 1px solid rgba(196,168,130,0.4); border-radius: 2px; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; color: var(--ink); outline: none; transition: border-color 0.2s; }
+  .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--clay); }
+  .form-textarea { resize: vertical; min-height: 100px; }
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+  .photo-upload { border: 2px dashed rgba(196,168,130,0.5); border-radius: 4px; padding: 2rem; text-align: center; cursor: pointer; transition: border-color 0.2s, background 0.2s; background: var(--sand); }
+  .photo-upload:hover { border-color: var(--clay); background: #E0D7C8; }
+  .photo-upload-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .photo-upload-text { font-size: 0.85rem; color: var(--smoke); line-height: 1.6; }
+  .photo-upload-text strong { color: var(--rust); }
+  .condition-pills { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+  .condition-pill { padding: 0.45rem 1rem; border-radius: 100px; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.05em; cursor: pointer; border: 1px solid rgba(196,168,130,0.4); background: transparent; color: var(--smoke); transition: all 0.2s; font-family: 'DM Sans', sans-serif; }
+  .condition-pill:hover { border-color: var(--ink); color: var(--ink); }
+  .condition-pill.active { background: var(--forest); color: var(--cream); border-color: var(--forest); }
+  .price-suggestion { background: rgba(45,74,62,0.08); border: 1px solid rgba(45,74,62,0.2); border-radius: 3px; padding: 0.85rem 1rem; margin-top: 0.5rem; font-size: 0.82rem; color: var(--forest); }
+  .price-suggestion strong { font-weight: 500; }
+  .submit-btn { width: 100%; background: var(--ink); color: var(--cream); border: none; padding: 1rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border-radius: 2px; margin-top: 1.5rem; transition: background 0.2s; }
+  .submit-btn:hover { background: var(--rust); }
+
+  .perk-card { padding: 2rem; background: var(--sand); border-radius: 4px; margin-bottom: 1rem; }
+  .perk-icon { font-size: 1.8rem; margin-bottom: 0.75rem; }
+  .perk-title { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .perk-text { font-size: 0.85rem; font-weight: 300; line-height: 1.75; color: var(--smoke); }
+
+  .payout-section { background: var(--ink); padding: 6rem 5rem; }
+  .payout-section .section-tag { color: var(--clay); }
+  .payout-section .section-title { color: var(--white); }
+  .payout-section .section-title em { color: var(--clay); }
+  .payout-section .section-sub { color: rgba(254,252,248,0.5); }
+  .payout-table { width: 100%; margin-top: 3rem; border-collapse: collapse; }
+  .payout-table th { font-size: 0.72rem; font-weight: 500; letter-spacing: 0.12em; text-transform: uppercase; color: var(--clay); padding: 0.75rem 1.25rem; text-align: left; border-bottom: 1px solid rgba(196,168,130,0.2); }
+  .payout-table td { padding: 1.1rem 1.25rem; font-size: 0.9rem; border-bottom: 1px solid rgba(196,168,130,0.1); transition: background 0.15s; }
+  .payout-table tr:last-child td { border-bottom: none; }
+  .payout-table tr:hover td { background: rgba(196,168,130,0.05); }
+  .td-tier { color: var(--white); font-weight: 500; }
+  .td-rate { font-family: 'Playfair Display', serif; font-size: 1.1rem; font-weight: 700; color: #6DBF8A; }
+  .td-info { color: rgba(254,252,248,0.45); font-size: 0.82rem; }
+  .tier-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 100px; font-size: 0.68rem; font-weight: 500; margin-left: 0.5rem; }
+  .badge-green { background: rgba(109,191,138,0.15); color: #6DBF8A; }
+  .badge-gold { background: rgba(196,168,130,0.2); color: var(--clay); }
+
+  .faq-section { padding: 6rem 5rem; background: var(--white); }
+  .faq-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 3rem; }
+  .faq-item { padding: 1.5rem; background: var(--cream); border-radius: 4px; cursor: pointer; transition: background 0.2s; }
+  .faq-item:hover { background: var(--sand); }
+  .faq-q { font-size: 0.95rem; font-weight: 500; display: flex; justify-content: space-between; align-items: center; gap: 1rem; }
+  .faq-toggle { color: var(--rust); font-size: 1.2rem; flex-shrink: 0; transition: transform 0.25s; }
+  .faq-a { font-size: 0.85rem; font-weight: 300; line-height: 1.75; color: var(--smoke); margin-top: 0.75rem; display: none; }
+  .faq-item.open .faq-a { display: block; }
+  .faq-item.open .faq-toggle { transform: rotate(45deg); }
+
+  .cta-banner { background: var(--rust); padding: 5rem; text-align: center; }
+  .cta-title { font-family: 'Playfair Display', serif; font-size: 2.8rem; font-weight: 900; color: white; margin-bottom: 1rem; line-height: 1.15; }
+  .cta-sub { font-size: 1rem; font-weight: 300; color: rgba(255,255,255,0.75); margin-bottom: 2.5rem; }
+  .btn-white { background: white; color: var(--rust); border: none; padding: 1rem 2.5rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.25s; margin: 0 0.5rem; display: inline-block; text-decoration: none; }
+  .btn-white:hover { background: var(--cream); transform: translateY(-2px); }
+  .btn-white-outline { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.5); padding: 1rem 2.5rem; font-family: 'DM Sans', sans-serif; font-size: 0.9rem; font-weight: 500; letter-spacing: 0.06em; text-transform: uppercase; cursor: pointer; border-radius: 2px; transition: all 0.25s; margin: 0 0.5rem; }
+  .btn-white-outline:hover { border-color: white; transform: translateY(-2px); }
+
+  footer { background: var(--ink); padding: 4rem 5rem 2rem; }
+  .footer-logo span { color: var(--clay); font-style: italic; }
+  .footer-bottom { border-top: 1px solid rgba(196,168,130,0.15); padding-top: 1.5rem; display: flex; align-items: center; justify-content: space-between; }
+  .footer-copy { font-size: 0.78rem; color: rgba(245,240,232,0.3); }
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="thrift-fashion.html">ECO<span>THRIFT</span></a>
+  <ul class="nav-links">
+    <li><a href="thrift-fashion.html">Laman Utama</a></li>
+    <li><a href="ecothrift-clothes.html">Pakaian</a></li>
+    <li><a href="ecothrift-pants.html">Seluar</a></li>
+    <li><a href="ecothrift-accessories.html">Aksesori</a></li>
+    <li><a href="sell.html" class="active">Jual</a></li>
+  </ul>
+  <div class="nav-actions">
+    <div class="cart-icon">🛍<div class="cart-badge">3</div></div>
+    <a href="signin.html" class="btn-nav" id="nav-signin-btn" style="text-decoration:none;">Log Masuk</a>
+  </div>
+</nav>
+
+<section class="sell-hero">
+  <div>
+    <div class="hero-tag">Tukar almari pakaian anda kepada wang tunai</div>
+    <h1 class="hero-title">Pakaian anda<br>layak mendapat<br><em>kehidupan kedua.</em></h1>
+    <p class="hero-sub">Senaraikan dalam masa 2 minit sahaja.</p>
+    <div class="hero-cta">
+      <a href="#listing-form" class="btn-primary" style="text-decoration:none;">Mula Senarai</a>
+    </div>
+  </div>
+  <div class="earnings-card">
+    <div class="earnings-title">Contoh Pendapatan Minggu Ini</div>
+    <div class="earnings-item">
+      <div class="item-name">Zara Oversized Blazer</div>
+      <div class="item-values">
+        <div class="item-sell">RM 145</div>
+        <div class="item-retail">Harga Asal RM 520</div>
+        <div class="item-payout">Anda dapat RM 133</div>
+      </div>
+    </div>
+    <div class="earnings-item">
+      <div class="item-name">Levi's 501 Jean</div>
+      <div class="item-values">
+        <div class="item-sell">RM 120</div>
+        <div class="item-retail">Harga Asal RM 380</div>
+        <div class="item-payout">Anda dapat RM 110</div>
+      </div>
+    </div>
+    <div class="earnings-item">
+      <div class="item-name">Coach Tali Pinggang Kulit</div>
+      <div class="item-values">
+        <div class="item-sell">RM 95</div>
+        <div class="item-retail">Harga Asal RM 290</div>
+        <div class="item-payout">Anda dapat RM 87</div>
+      </div>
+    </div>
+    <div class="earnings-item">
+      <div class="item-name">COS Midi Dress</div>
+      <div class="item-values">
+        <div class="item-sell">RM 88</div>
+        <div class="item-retail">Harga Asal RM 310</div>
+        <div class="item-payout">Anda dapat RM 81</div>
+      </div>
+    </div>
+    <div class="earnings-footer">Penjual di Ecothrift menjana purata RM 411 sebulan</div>
+  </div>
+</section>
+
+<section class="section" id="how-it-works">
+  <div class="section-tag">Prosesnya</div>
+  <h2 class="section-title">Senarai, jual, <em>ulang.</em></h2>
+  <p class="section-sub">Empat langkah mudah antara almari pakaian penuh dan wang tambahan di poket anda.</p>
+  <div class="steps-grid">
+    <div class="step-card">
+      <div class="step-num">01</div>
+      <div class="step-icon">📸</div>
+      <div class="step-title">Fotografi</div>
+      <div class="step-desc">Ambil foto yang jelas pada latar belakang neutral. Panduan kami tunjukkan sudut terbaik untuk jualan pantas.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">02</div>
+      <div class="step-icon">✏️</div>
+      <div class="step-title">Hurai & Harga</div>
+      <div class="step-desc">Isi jenama, saiz, keadaan, dan harga anda. Kami cadangkan harga kompetitif berdasarkan data pasaran semasa.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">03</div>
+      <div class="step-icon">🔒</div>
+      <div class="step-title">Kami Mengesahkan</div>
+      <div class="step-desc">Pasukan kami menyemak setiap senarai sebelum ia disiarkan. Pembeli mempercayai lencana Ecothrift — itulah sebabnya barang cepat terjual.</div>
+    </div>
+    <div class="step-card">
+      <div class="step-num">04</div>
+      <div class="step-icon">🛡️</div>
+      <div class="step-title">Cash on Delivery</div>
+      <div class="step-desc">Pembeli bayar semasa menerima barang. Wang anda selamat — tiada risiko penipuan atau pembayaran gagal.</div>
+    </div>
+  </div>
+</section>
+
+<div class="listing-section">
+  <div>
+    <div class="section-tag">Keselamatan COD</div>
+    <h2 class="section-title">Mengapa kami<br>guna <em>COD?</em></h2>
+    <p class="section-sub">Cash on Delivery — cara paling selamat untuk penjual dan pembeli.</p>
+    <div style="margin-top: 2rem;">
+      <div class="perk-card">
+        <div class="perk-icon">🛡️</div>
+        <div class="perk-title">Bayar Semasa Terima</div>
+        <div class="perk-text">Pembeli hanya bayar apabila barang sudah di tangan. Tiada bayaran pendahuluan, tiada risiko hilang wang.</div>
+      </div>
+      <div class="perk-card">
+        <div class="perk-icon">🚫</div>
+        <div class="perk-title">Tiada Risiko Penipuan</div>
+        <div class="perk-text">COD mengelakkan penipuan pembayaran dalam talian sepenuhnya. Jualan lebih selamat untuk semua pihak.</div>
+      </div>
+      <div class="perk-card">
+        <div class="perk-icon">✅</div>
+        <div class="perk-title">Kepercayaan Pembeli Lebih Tinggi</div>
+        <div class="perk-text">Pembeli lebih yakin membeli apabila boleh periksa barang dahulu sebelum membayar.</div>
+      </div>
+      <div class="perk-card">
+        <div class="perk-icon">📦</div>
+        <div class="perk-title">Proses Mudah &amp; Telus</div>
+        <div class="perk-text">Barang dihantar, diterima, dan bayaran dijelaskan secara langsung. Tiada kekeliruan, tiada perantara.</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="form-card" id="listing-form">
+    <div class="form-title">Senaraikan Barang Anda</div>
+    <div class="form-sub">Isi butiran di bawah dan kami akan semak senarai anda dalam masa 24 jam.</div>
+
+    <div class="form-group">
+      <label class="form-label">Foto</label>
+      <input type="file" id="photo-file-input" accept="image/jpeg,image/png" multiple style="display:none;">
+      <div class="photo-upload" id="photo-drop">
+        <div class="photo-upload-icon">📷</div>
+        <div class="photo-upload-text"><strong>Klik untuk muat naik</strong> atau seret dan lepas<br>JPEG, PNG sehingga 10MB setiap satu. Min 3 foto.</div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Nama Listing</label>
+      <input type="text" class="form-input" placeholder="cth: Baju Iron Maiden, Seluar Jeans Levi's 501…" id="listing-name" maxlength="80">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Kategori</label>
+      <select class="form-select" id="category-select">
+        <option value="">Pilih kategori</option>
+        <optgroup label="👕 Pakaian">
+          <option value="Pakaian — Jersey Sukan">Jersey Sukan</option>
+          <option value="Pakaian — Polo & Shirt">Polo &amp; Shirt</option>
+          <option value="Pakaian — Jaket & Track Jacket">Jaket &amp; Track Jacket</option>
+          <option value="Pakaian — Hoodie & Sweater">Hoodie &amp; Sweater</option>
+        </optgroup>
+        <optgroup label="👖 Seluar">
+          <option value="Seluar — Jean & Denim">Jean &amp; Denim</option>
+          <option value="Seluar — Chino & Seluar Casual">Chino &amp; Seluar Casual</option>
+          <option value="Seluar — Track Pants & Jogger">Track Pants &amp; Jogger</option>
+          <option value="Seluar — Seluar Pendek">Seluar Pendek</option>
+        </optgroup>
+        <optgroup label="🎒 Aksesori">
+          <option value="Aksesori — Topi & Cap">Topi &amp; Cap</option>
+          <option value="Aksesori — Beg & Totes">Beg &amp; Totes</option>
+          <option value="Aksesori — Barang Kemas">Barang Kemas</option>
+          <option value="Aksesori — Lain-lain">Lain-lain</option>
+        </optgroup>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Saiz</label>
+        <input type="text" class="form-input" placeholder="cth. M, W30, One Saiz" id="size-input">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Harga Asal (RM)</label>
+        <input type="number" class="form-input" placeholder="cth. 299" id="retail-input">
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Keadaan</label>
+      <div class="condition-pills">
+        <button class="condition-pill" data-condition="Seperti Baru">Seperti Baru</button>
+        <button class="condition-pill" data-condition="Cemerlang">Cemerlang</button>
+        <button class="condition-pill" data-condition="Baik">Baik</button>
+        <button class="condition-pill" data-condition="Sederhana">Sederhana</button>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Harga Tawaran Anda (RM)</label>
+      <input type="number" class="form-input" placeholder="cth. 89" id="price-input">
+      <div class="price-suggestion" id="price-hint" style="display:none;">
+        Julat cadangan: <strong><span id="price-range-text"></span></strong> berdasarkan jualan terkini.
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Penerangan</label>
+      <textarea class="form-textarea" placeholder="Huraikan keadaan, sebarang kecacatan, berapa kali dipakai, dsb." id="desc-input"></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Negeri</label>
+      <select class="form-select" id="negeri-select">
+        <option value="">Pilih negeri</option>
+        <option value="Johor">Johor</option>
+        <option value="Kedah">Kedah</option>
+        <option value="Kelantan">Kelantan</option>
+        <option value="Melaka">Melaka</option>
+        <option value="Negeri Sembilan">Negeri Sembilan</option>
+        <option value="Pahang">Pahang</option>
+        <option value="Perak">Perak</option>
+        <option value="Perlis">Perlis</option>
+        <option value="Pulau Pinang">Pulau Pinang</option>
+        <option value="Sabah">Sabah</option>
+        <option value="Sarawak">Sarawak</option>
+        <option value="Selangor">Selangor</option>
+        <option value="Terengganu">Terengganu</option>
+        <option value="Kuala Lumpur">Kuala Lumpur</option>
+        <option value="Putrajaya">Putrajaya</option>
+        <option value="Labuan">Labuan</option>
+      </select>
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label class="form-label">Nama Anda</label>
+        <input type="text" class="form-input" placeholder="Nama penuh" id="seller-name">
+      </div>
+      <div class="form-group">
+        <label class="form-label">Alamat Emel</label>
+        <input type="email" class="form-input" placeholder="emel@anda.com" id="seller-email">
+      </div>
+    </div>
+
+    <button class="submit-btn" id="submit-listing">Hantar Senarai untuk Semakan</button>
+  </div>
+</div>
+
+<section class="payout-section">
+  <div class="section-tag">Harga Telus</div>
+  <h2 class="section-title">Kadar <em>bayaran yang jelas.</em></h2>
+  <p class="section-sub">Tiada kejutan. Lihat tepat apa yang anda perolehi sebelum menyenaraikan.</p>
+  <table class="payout-table">
+    <thead>
+      <tr>
+        <th>Harga Jualan</th>
+        <th>Bayaran Anda</th>
+        <th>Yuran Ecothrift</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="td-tier">RM 0 – 50</td>
+        <td class="td-rate">90%</td>
+        <td class="td-info">10% komisen</td>
+      </tr>
+      <tr>
+        <td class="td-tier">RM 51 – 150 <span class="tier-badge badge-green">Paling Biasa</span></td>
+        <td class="td-rate">92%</td>
+        <td class="td-info">8% komisen</td>
+      </tr>
+      <tr>
+        <td class="td-tier">RM 151 – 300</td>
+        <td class="td-rate">94%</td>
+        <td class="td-info">6% komisen</td>
+      </tr>
+      <tr>
+        <td class="td-tier">RM 301+ <span class="tier-badge badge-gold">Premium</span></td>
+        <td class="td-rate">95%</td>
+        <td class="td-info">5% komisen</td>
+      </tr>
+    </tbody>
+  </table>
+</section>
+
+<section class="faq-section">
+  <div class="section-tag">Ada Soalan?</div>
+  <h2 class="section-title"><em>Soalan Lazim</em></h2>
+  <div class="faq-grid">
+    <div class="faq-item">
+      <div class="faq-q">Berapa lama pengesahan mengambil masa? <span class="faq-toggle">+</span></div>
+      <div class="faq-a">Pengesahan mengambil masa 24 hingga 48 jam pada hari bekerja. Kami akan menghantar emel kepada anda sebaik sahaja senarai anda aktif dan boleh dilihat oleh pembeli.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Bagaimana jika barang saya tidak terjual? <span class="faq-toggle">+</span></div>
+      <div class="faq-a">Senarai kekal aktif selama 90 hari. Selepas itu, kami akan maklumkan anda dan anda boleh senarai semula, turunkan harga, atau minta barang dikembalikan.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Bagaimana proses COD berfungsi? <span class="faq-toggle">+</span></div>
+      <div class="faq-a">Pembeli membayar secara tunai semasa menerima barang — tiada bayaran dalam talian diperlukan. Wang anda akan dikreditkan selepas pengesahan penerimaan oleh pembeli.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Bolehkah saya jual barang dari mana-mana jenama? <span class="faq-toggle">+</span></div>
+      <div class="faq-a">Ya — kami terima semua jenama dari fesyen cepat hingga mewah. Barang mestilah tulen dan memenuhi piawaian keadaan kami.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Bilakah saya akan dibayar? <span class="faq-toggle">+</span></div>
+      <div class="faq-a">Bayaran dilepaskan 3 hari bekerja selepas pembeli mengesahkan penerimaan. Dana terus ke bank atau e-dompet anda.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Apakah keadaan barang yang diperlukan? <span class="faq-toggle">+</span></div>
+      <div class="faq-a">Kami menerima barang berkeadaan Sederhana ke atas. Tiada koyakan, kotoran teruk, atau bahagian yang hilang. Senarai yang tidak memenuhi piawaian kami akan ditolak.</div>
+    </div>
+  </div>
+</section>
+
+<div class="cta-banner">
+  <h2 class="cta-title">Bersedia kosongkan almari pakaian anda?</h2>
+  <p class="cta-sub">Sertai 12,000+ penjual yang sudah menjana pendapatan di Ecothrift.</p>
+  <button class="btn-white" id="cta-start-btn">Mula Senarai Sekarang</button>
+  <button class="btn-white-outline" id="cta-browse-btn">Layari Kedai</button>
+</div>
+
+<footer>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Ecothrift. Hak cipta terpelihara.</div>
+    <div class="footer-copy">Privasi · Terma · Kuki</div>
+  </div>
+</footer>
+
+<script src="ecothrift.js"></script>
+<script src="location-selector.js"></script>
+<script>
+  // Keadaan pills
+  document.querySelectorAll('.condition-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('.condition-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+    });
+  });
+
+  // Price suggestion
+  document.getElementById('retail-input')?.addEventListener('input', function() {
+    const val = parseFloat(this.value);
+    const hint = document.getElementById('price-hint');
+    if (val > 0) {
+      const low = Math.round(val * 0.22), high = Math.round(val * 0.38);
+      document.getElementById('price-range-text').textContent = 'RM ' + low + ' – RM ' + high;
+      hint.style.display = 'block';
+    } else {
+      hint.style.display = 'none';
+    }
+  });
+
+  // Auto-fill seller name & email from logged-in user
+  document.addEventListener('DOMContentLoaded', () => {
+    if (typeof auth === 'undefined') return;
+    auth.onAuthStateChanged(user => {
+      const nameEl  = document.getElementById('seller-name');
+      const emailEl = document.getElementById('seller-email');
+      if (!nameEl || !emailEl) return;
+      if (user) {
+        nameEl.value    = user.displayName || user.email.split('@')[0];
+        emailEl.value   = user.email;
+        nameEl.readOnly = true;
+        emailEl.readOnly = true;
+        nameEl.style.opacity  = '0.7';
+        emailEl.style.opacity = '0.7';
+        nameEl.title  = 'Dikemaskini daripada akaun anda';
+        emailEl.title = 'Dikemaskini daripada akaun anda';
+      } else {
+        nameEl.readOnly  = false;
+        emailEl.readOnly = false;
+        nameEl.style.opacity  = '';
+        emailEl.style.opacity = '';
+      }
+    });
+  });
+
+  // Photo upload
+  let uploadedFiles = [];
+  const photoDrop  = document.getElementById('photo-drop');
+  const fileInput  = document.getElementById('photo-file-input');
+
+  function showPhotoReady(count) {
+    photoDrop.innerHTML = '<div class="photo-upload-icon">✅</div><div class="photo-upload-text"><strong>' + count + ' foto dipilih</strong><br>Klik untuk tukar</div>';
+    ECO.toast(count + ' foto siap dimuat naik', 'success');
+  }
+
+  fileInput?.addEventListener('change', () => {
+    uploadedFiles = Array.from(fileInput.files);
+    if (uploadedFiles.length) showPhotoReady(uploadedFiles.length);
+  });
+  photoDrop?.addEventListener('dragover', e => { e.preventDefault(); photoDrop.style.borderColor = 'var(--rust)'; });
+  photoDrop?.addEventListener('dragleave', () => { photoDrop.style.borderColor = ''; });
+  photoDrop?.addEventListener('drop', e => {
+    e.preventDefault(); photoDrop.style.borderColor = '';
+    uploadedFiles = Array.from(e.dataTransfer.files);
+    showPhotoReady(uploadedFiles.length);
+  });
+  photoDrop?.addEventListener('click', () => fileInput?.click());
+
+  // Submit listing → Firestore + Storage
+  document.getElementById('submit-listing')?.addEventListener('click', async () => {
+    const listingName = document.getElementById('listing-name')?.value.trim();
+    const cat    = document.getElementById('category-select')?.value;
+    const size   = document.getElementById('size-input')?.value.trim();
+    const retail = parseFloat(document.getElementById('retail-input')?.value) || 0;
+    const price  = document.getElementById('price-input')?.value;
+    const desc   = document.getElementById('desc-input')?.value.trim();
+    const negeri = document.getElementById('negeri-select')?.value;
+    const name   = document.getElementById('seller-name')?.value.trim();
+    const email  = document.getElementById('seller-email')?.value.trim();
+    const cond   = document.querySelector('.condition-pill.active')?.dataset.condition;
+
+    if (!listingName) { ECO.toast('Sila masukkan nama listing', 'error'); return; }
+    if (!cat)    { ECO.toast('Sila pilih kategori', 'error'); return; }
+    if (!size)   { ECO.toast('Sila masukkan saiz', 'error'); return; }
+    if (!cond)   { ECO.toast('Sila pilih keadaan barang', 'error'); return; }
+    if (!price)  { ECO.toast('Sila masukkan harga tawaran', 'error'); return; }
+    if (!negeri) { ECO.toast('Sila pilih negeri', 'error'); return; }
+    if (!name)   { ECO.toast('Sila masukkan nama anda', 'error'); return; }
+    if (!email || !email.includes('@')) { ECO.toast('Sila masukkan emel yang sah', 'error'); return; }
+
+    const btn = document.getElementById('submit-listing');
+    btn.textContent = 'Menghantar…';
+    btn.disabled = true;
+
+    try {
+      // Upload foto ke Firebase Storage
+      const photoURLs = [];
+      const ts = Date.now();
+      for (const file of uploadedFiles) {
+        const ref  = storage.ref('listings/' + ts + '/' + file.name);
+        const snap = await ref.put(file);
+        photoURLs.push(await snap.ref.getDownloadURL());
+      }
+
+      // Simpan listing ke Firestore
+      await db.collection('listings').add({
+        listingName: listingName,
+        category:    cat,
+        size:        size,
+        condition:   cond,
+        negeri:      negeri,
+        retailPrice: retail,
+        askingPrice: parseFloat(price),
+        description: desc,
+        sellerName:  name,
+        sellerEmail: email,
+        photoURLs:   photoURLs,
+        status:      'pending',
+        createdAt:   firebase.firestore.FieldValue.serverTimestamp()
+      });
+
+      // Hantar emel pengesahan kepada penjual
+      emailjs.send('service_e936r3a', 'template_p7n6rc7', {
+        email:        email,
+        seller_name:  name,
+        listing_name: listingName,
+        price:        parseFloat(price).toFixed(2)
+      }).catch(err => console.warn('EmailJS error:', err));
+
+      document.getElementById('listing-form').innerHTML =
+        '<div style="text-align:center;padding:3rem 1rem;">' +
+        '<div style="font-size:3rem;margin-bottom:1rem;">🎉</div>' +
+        '<h3 style="font-family:\'Playfair Display\',serif;font-size:1.6rem;font-weight:700;margin-bottom:.75rem;">Senarai Dihantar!</h3>' +
+        '<p style="color:var(--smoke);font-size:.9rem;line-height:1.75;margin-bottom:2rem;">Terima kasih <strong>' + name + '</strong>! Kami akan semak senarai anda dalam masa 24 jam dan hantar pengesahan ke <strong>' + email + '</strong>.</p>' +
+        '<button onclick="window.location.reload()" style="background:var(--ink);color:var(--cream);border:none;padding:.85rem 2rem;font-family:\'DM Sans\',sans-serif;font-size:.85rem;font-weight:500;letter-spacing:.06em;text-transform:uppercase;cursor:pointer;border-radius:2px;">Senarai Lain</button>' +
+        '</div>';
+      ECO.toast('Senarai dihantar untuk semakan!', 'success', 4000);
+    } catch (err) {
+      btn.textContent = 'Hantar Senarai untuk Semakan';
+      btn.disabled = false;
+      ECO.toast('Ralat semasa menghantar: ' + err.message, 'error', 5000);
+    }
+  });
+
+  // Scroll buttons
+  document.getElementById('how-it-works-link')?.addEventListener('click', () => {
+    document.getElementById('how-it-works')?.scrollIntoView({ behavior: 'smooth' });
+  });
+  ['start-listing-btn','cta-start-btn'].forEach(id => {
+    document.getElementById(id)?.addEventListener('click', () => {
+      document.getElementById('listing-form')?.scrollIntoView({ behavior: 'smooth' });
+    });
+  });
+  document.getElementById('cta-browse-btn')?.addEventListener('click', () => {
+    window.location.href = 'ecothrift-clothes.html';
+  });
+
+  // Soalan Lazim accordion
+  document.querySelectorAll('.faq-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const isOpen = item.classList.contains('open');
+      document.querySelectorAll('.faq-item').forEach(i => i.classList.remove('open'));
+      if (!isOpen) item.classList.add('open');
+    });
+  });
+</script>
+<script src="auth-nav.js"></script>
+</body>
+</html>

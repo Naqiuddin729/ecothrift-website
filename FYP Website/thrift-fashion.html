@@ -1,0 +1,875 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECOTHRIFT — Thrift Differently</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #F5F0E8;
+    --sand: #E8DFD0;
+    --clay: #C4A882;
+    --rust: #B85C3A;
+    --forest: #2D4A3E;
+    --ink: #1A1A18;
+    --smoke: #7A7568;
+    --white: #FEFCF8;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.4rem 3rem;
+    background: rgba(245, 240, 232, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(196, 168, 130, 0.25);
+  }
+
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem;
+    font-weight: 900;
+    letter-spacing: -0.03em;
+    color: var(--ink);
+    text-decoration: none;
+  }
+
+  .nav-logo span { color: var(--rust); font-style: italic; }
+
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.85rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--smoke);
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--ink); }
+
+  .nav-actions { display: flex; align-items: center; gap: 1.2rem; }
+
+  .btn-nav {
+    background: var(--ink);
+    color: var(--cream);
+    border: none;
+    padding: 0.65rem 1.4rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.15s;
+    border-radius: 2px;
+  }
+  .btn-nav:hover { background: var(--rust); transform: translateY(-1px); }
+
+  .cart-icon { position: relative; cursor: pointer; color: var(--ink); }
+  .cart-badge {
+    position: absolute; top: -6px; right: -8px;
+    background: var(--rust); color: white;
+    width: 16px; height: 16px; border-radius: 50%;
+    font-size: 0.65rem; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* HERO */
+  .hero {
+    min-height: 100vh;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding-top: 80px;
+  }
+
+  .hero-left {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 6rem 4rem 6rem 5rem;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hero-tag {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    font-size: 0.75rem; font-weight: 500;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--rust);
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-tag::before {
+    content: '';
+    width: 24px; height: 1px;
+    background: var(--rust);
+  }
+
+  .hero-title {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(3.5rem, 5.5vw, 5.5rem);
+    font-weight: 900;
+    line-height: 1.0;
+    letter-spacing: -0.02em;
+    color: var(--ink);
+    margin-bottom: 1.5rem;
+  }
+
+  .hero-title em {
+    font-style: italic;
+    color: var(--rust);
+  }
+
+  .hero-sub {
+    font-size: 1.05rem;
+    font-weight: 300;
+    line-height: 1.75;
+    color: var(--smoke);
+    max-width: 380px;
+    margin-bottom: 3rem;
+  }
+
+  .hero-cta { display: flex; align-items: center; gap: 1.5rem; }
+
+  .btn-primary {
+    background: var(--forest);
+    color: var(--cream);
+    border: none;
+    padding: 1rem 2.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 500;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.25s;
+    text-decoration: none; display: inline-block;
+  }
+  .btn-primary:hover { background: var(--rust); transform: translateY(-2px); }
+
+  .btn-ghost {
+    background: transparent;
+    border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.88rem;
+    font-weight: 500;
+    color: var(--smoke);
+    cursor: pointer;
+    display: flex; align-items: center; gap: 0.5rem;
+    text-decoration: underline; text-underline-offset: 4px;
+  }
+  .btn-ghost:hover { color: var(--ink); }
+
+  .hero-stats {
+    display: flex; gap: 2.5rem;
+    margin-top: 4rem;
+    padding-top: 2rem;
+    border-top: 1px solid rgba(196, 168, 130, 0.4);
+  }
+
+  .stat-num {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem; font-weight: 700;
+    color: var(--ink);
+  }
+  .stat-label {
+    font-size: 0.75rem; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--smoke);
+    margin-top: 0.2rem;
+  }
+
+  /* HERO RIGHT — collage */
+  .hero-right {
+    background: var(--sand);
+    position: relative;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  .hero-collage {
+    position: relative;
+    width: 100%; height: 100%;
+  }
+
+  .collage-block {
+    position: absolute;
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  /* Clothing illustrations using CSS */
+  .garment-card {
+    position: absolute;
+    background: var(--white);
+    border-radius: 4px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    box-shadow: 0 4px 20px rgba(26,26,24,0.12);
+    padding: 1.2rem;
+    transition: transform 0.3s;
+  }
+  .garment-card:hover { transform: rotate(0deg) translateY(-4px) !important; }
+
+  .price-badge {
+    background: var(--rust);
+    color: white;
+    font-size: 0.7rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    padding: 0.2rem 0.6rem;
+    border-radius: 2px;
+    position: absolute;
+    top: 10px; right: 10px;
+  }
+
+  .garment-label {
+    font-size: 0.72rem;
+    font-weight: 500;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--smoke);
+    text-align: center;
+  }
+
+  /* SVG garments */
+  .garment-svg { width: 80px; height: 80px; }
+
+  /* Floating tag */
+  .floating-tag {
+    position: absolute;
+    background: var(--forest);
+    color: var(--cream);
+    padding: 0.6rem 1rem;
+    border-radius: 100px;
+    font-size: 0.75rem;
+    font-weight: 500;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+    animation: float 3s ease-in-out infinite;
+  }
+
+  @keyframes float {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-6px); }
+  }
+
+  /* TICKER */
+  .ticker-wrap {
+    background: var(--ink);
+    color: var(--cream);
+    padding: 0.8rem 0;
+    overflow: hidden;
+    white-space: nowrap;
+  }
+
+  .ticker-track {
+    display: inline-block;
+    animation: ticker 20s linear infinite;
+  }
+
+  .ticker-track span {
+    font-size: 0.78rem;
+    font-weight: 500;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    margin-right: 3rem;
+    color: rgba(245,240,232,0.7);
+  }
+
+  .ticker-track span.accent { color: var(--clay); }
+
+  @keyframes ticker {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+  }
+
+  /* CATEGORIES */
+  .section { padding: 6rem 5rem; }
+  .section-header {
+    display: flex; align-items: flex-end; justify-content: space-between;
+    margin-bottom: 3rem;
+  }
+
+  .section-tag {
+    font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--rust);
+    margin-bottom: 0.75rem;
+  }
+
+  .section-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.6rem; font-weight: 700;
+    line-height: 1.15;
+    letter-spacing: -0.02em;
+  }
+
+  .section-title em { font-style: italic; color: var(--rust); }
+
+  .see-all {
+    font-size: 0.82rem; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--smoke); text-decoration: none;
+    border-bottom: 1px solid currentColor;
+    padding-bottom: 2px;
+    transition: color 0.2s;
+  }
+  .see-all:hover { color: var(--ink); }
+
+  /* Kategori grid */
+  .cat-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+  }
+
+  .cat-card {
+    position: relative;
+    height: 280px;
+    border-radius: 4px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.3s;
+  }
+  .cat-card:hover { transform: translateY(-4px); }
+  .cat-card:first-child { grid-row: span 2; height: auto; min-height: 580px; }
+
+  .cat-bg {
+    width: 100%; height: 100%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 4rem;
+    transition: transform 0.4s;
+  }
+  .cat-card:hover .cat-bg { transform: scale(1.05); }
+
+  .cat-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, rgba(26,26,24,0.7) 0%, transparent 60%);
+    display: flex; flex-direction: column;
+    justify-content: flex-end;
+    padding: 1.5rem;
+  }
+
+  .cat-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.4rem; font-weight: 700;
+    color: white;
+    margin-bottom: 0.3rem;
+  }
+
+  .cat-count {
+    font-size: 0.75rem; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: rgba(255,255,255,0.65);
+  }
+
+  /* PRODUCT GRID */
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.5rem;
+  }
+
+  .product-card {
+    cursor: pointer;
+    transition: transform 0.25s;
+  }
+  .product-card:hover { transform: translateY(-3px); }
+
+  .product-img {
+    background: var(--sand);
+    border-radius: 4px;
+    aspect-ratio: 3/4;
+    position: relative;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 3.5rem;
+    margin-bottom: 1rem;
+    transition: background 0.3s;
+  }
+  .product-card:hover .product-img { background: #DDD5C4; }
+
+  .product-save {
+    position: absolute; top: 12px; right: 12px;
+    width: 32px; height: 32px;
+    background: white;
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity 0.2s;
+    font-size: 0.85rem;
+  }
+  .product-card:hover .product-save { opacity: 1; }
+
+  .product-condition {
+    display: inline-block;
+    font-size: 0.65rem; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--forest);
+    background: rgba(45,74,62,0.1);
+    padding: 0.2rem 0.55rem;
+    border-radius: 2px;
+    margin-bottom: 0.5rem;
+  }
+
+  .product-name {
+    font-size: 0.95rem; font-weight: 500;
+    color: var(--ink);
+    margin-bottom: 0.3rem;
+  }
+
+  .product-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem; font-weight: 700;
+    color: var(--ink);
+  }
+
+  .product-price .original {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem; font-weight: 400;
+    color: var(--smoke);
+    text-decoration: line-through;
+    margin-left: 0.4rem;
+  }
+
+  /* ABOUT STRIP */
+  .about-strip {
+    background: var(--forest);
+    padding: 5rem;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4rem;
+    align-items: center;
+  }
+
+  .about-left .section-tag { color: var(--clay); }
+  .about-left .section-title { color: var(--white); }
+  .about-left .section-title em { color: var(--clay); }
+
+  .about-text {
+    font-size: 1rem; font-weight: 300; line-height: 1.85;
+    color: rgba(254,252,248,0.65);
+    margin-top: 1.5rem;
+  }
+
+  .pillars {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  .pillar {
+    border: 1px solid rgba(196,168,130,0.25);
+    border-radius: 4px;
+    padding: 1.5rem;
+  }
+
+  .pillar-icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+
+  .pillar-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.05rem; font-weight: 700;
+    color: var(--clay); margin-bottom: 0.4rem;
+  }
+
+  .pillar-text {
+    font-size: 0.82rem; font-weight: 300; line-height: 1.7;
+    color: rgba(254,252,248,0.5);
+  }
+
+  /* BANNER */
+  .banner {
+    background: var(--rust);
+    padding: 4rem 5rem;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+
+  .banner-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 2.2rem; font-weight: 900;
+    color: white;
+    max-width: 500px;
+    line-height: 1.2;
+  }
+
+  .btn-white {
+    background: white;
+    color: var(--rust);
+    border: none;
+    padding: 1rem 2.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer; border-radius: 2px;
+    transition: all 0.25s; white-space: nowrap;
+    text-decoration: none; display: inline-block;
+  }
+  .btn-white:hover { background: var(--cream); transform: translateY(-2px); }
+
+  /* NEWSLETTER */
+
+  
+  footer {
+    background: var(--ink);
+    padding: 1.5rem 5rem;
+  }
+  .footer-bottom {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-copy { font-size: 0.78rem; color: rgba(245,240,232,0.3); }
+
+
+  /* ANIMATIONS */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .hero-tag { animation: fadeUp 0.6s ease 0.1s both; }
+  .hero-title { animation: fadeUp 0.7s ease 0.2s both; }
+  .hero-sub { animation: fadeUp 0.7s ease 0.35s both; }
+  .hero-cta { animation: fadeUp 0.7s ease 0.5s both; }
+  .hero-stats { animation: fadeUp 0.7s ease 0.65s both; }
+
+  /* Colors for bg blocks */
+  .bg-rust { background: #D4724F; }
+  .bg-forest { background: #3A5E50; }
+  .bg-clay { background: #C4A882; }
+  .bg-sand { background: #E8DFD0; }
+  .bg-blush { background: #E8C5B0; }
+  .bg-sage { background: #8FA896; }
+  .bg-navy { background: #2E3A4E; }
+  .bg-warm { background: #D4A96A; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="thrift-fashion.html">ECO<span>THRIFT</span></a>
+  <ul class="nav-links">
+    <li><a href="thrift-fashion.html">Laman Utama</a></li>
+    <li><a href="ecothrift-clothes.html">Pakaian</a></li>
+    <li><a href="ecothrift-pants.html">Seluar</a></li>
+    <li><a href="ecothrift-accessories.html">Aksesori</a></li>
+    <li><a href="ecothrift-sell.html">Jual</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="chat.html" style="font-size:.82rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--smoke);text-decoration:none;transition:color .2s;" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--smoke)'">💬 Chat</a>
+    <div class="cart-icon">
+      🛍
+      <div class="cart-badge">3</div>
+    </div>
+    <a href="signin.html" class="btn-nav" id="nav-signin-btn" style="text-decoration:none;">Log Masuk</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-left">
+    <div class="hero-tag">Koleksi Musim Baru — SS 2026</div>
+    <h1 class="hero-title">
+      Thrift<br>
+      <em>Menjangkau</em><br>
+      Masa.
+    </h1>
+    <p class="hero-sub">
+      Fesyen terpakai terpilih dari jenama kegemaran anda, pada harga yang berpatutan.
+    </p>
+    <div class="hero-cta">
+      <a href="ecothrift-clothes.html" class="btn-primary">Beli Sekarang</a>
+      <button class="btn-ghost" onclick="window.location.href='ecothrift-sell.html'">Cara ia berfungsi →</button>
+    </div>
+    <div class="hero-stats">
+      <div>
+        <div class="stat-num">24K+</div>
+        <div class="stat-label">Produk Tersenarai</div>
+      </div>
+      <div>
+        <div class="stat-num">4.9★</div>
+        <div class="stat-label">Penilaian Purata</div>
+      </div>
+      <div>
+        <div class="stat-num">72%</div>
+        <div class="stat-label">Penjimatan Purata</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-right">
+    <!-- Card 1: Jersey -->
+    <div class="garment-card" style="width:160px; top:15%; left:8%; transform:rotate(-4deg);">
+      <div class="price-badge">RM 145</div>
+      <svg viewBox="0 0 80 80" class="garment-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="25" y="8" width="30" height="4" rx="2" fill="#B85C3A"/>
+        <path d="M20 12 L10 30 L20 30 L18 70 L62 70 L60 30 L70 30 L60 12 L50 20 C47 24 33 24 30 20 Z" fill="#2D4A3E"/>
+        <rect x="18" y="30" width="2" height="40" fill="#1A3530"/>
+        <rect x="60" y="30" width="2" height="40" fill="#1A3530"/>
+        <text x="40" y="50" font-size="10" text-anchor="middle" fill="white" font-family="sans-serif" font-weight="bold">7</text>
+      </svg>
+      <div class="garment-label">Jersey Bola</div>
+    </div>
+
+    <!-- Card 2: Polo Shirt -->
+    <div class="garment-card" style="width:150px; top:10%; left:45%; transform:rotate(3deg);">
+      <div class="price-badge">RM 95</div>
+      <svg viewBox="0 0 80 80" class="garment-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 8 C15 8 35 4 40 4 C45 4 65 8 65 8 L68 25 L55 22 L58 75 L22 75 L25 22 L12 25 Z" fill="#C4A882"/>
+        <path d="M32 4 Q40 12 48 4" stroke="#B09270" stroke-width="1.5" fill="none"/>
+        <line x1="40" y1="12" x2="40" y2="75" stroke="#B09270" stroke-width="1" stroke-dasharray="3 3"/>
+      </svg>
+      <div class="garment-label">Polo Shirt</div>
+    </div>
+
+    <!-- Card 3: Seluar Jean -->
+    <div class="garment-card" style="width:155px; bottom:18%; left:12%; transform:rotate(2deg);">
+      <div class="price-badge">RM 120</div>
+      <svg viewBox="0 0 80 80" class="garment-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="20" y="8" width="40" height="4" rx="2" fill="#C4A882"/>
+        <path d="M20 12 L18 75 L38 75 L40 45 L42 75 L62 75 L60 12 Z" fill="#4A6FA5"/>
+        <line x1="40" y1="12" x2="40" y2="75" stroke="#3A5A8A" stroke-width="2"/>
+        <rect x="20" y="12" width="40" height="5" rx="1" fill="#3A5A8A" opacity="0.5"/>
+      </svg>
+      <div class="garment-label">Seluar Jean</div>
+    </div>
+
+    <!-- Card 4: Topi Snapback -->
+    <div class="garment-card" style="width:148px; bottom:12%; right:8%; transform:rotate(-2deg);">
+      <div class="price-badge">RM 65</div>
+      <svg viewBox="0 0 80 80" class="garment-svg" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M15 42 Q40 18 65 42 Z" fill="#2D4A3E"/>
+        <rect x="15" y="42" width="50" height="10" rx="2" fill="#2D4A3E"/>
+        <rect x="10" y="52" width="36" height="6" rx="3" fill="#1A3530"/>
+        <rect x="48" y="52" width="22" height="4" rx="2" fill="#C4A882"/>
+        <circle cx="40" cy="32" r="4" fill="#C4A882"/>
+      </svg>
+      <div class="garment-label">Topi Snapback</div>
+    </div>
+
+    <!-- Floating tags -->
+    <div class="floating-tag" style="top: 45%; left: 38%; animation-delay: 0s;">✦ Disahkan</div>
+    <div class="floating-tag" style="bottom: 35%; right: 4%; animation-delay:1.2s; background:var(--rust);">🛡️ COD Sahaja</div>
+  </div>
+</section>
+
+<!-- TICKER -->
+<div class="ticker-wrap">
+  <div class="ticker-track">
+    <span>Listing Baru Setiap Hari</span><span class="accent">✦</span>
+    <span>Bayar Tunai COD — Selamat &amp; Mudah</span><span class="accent">✦</span>
+    <span>Setiap Listing Disahkan Admin</span><span class="accent">✦</span>
+    <span>Jimat Sehingga 70% Harga Asal</span><span class="accent">✦</span>
+    <span>Fesyen Thrift Mesra Alam</span><span class="accent">✦</span>
+    <span>Chat Terus Dengan Penjual</span><span class="accent">✦</span>
+    <span>Listing Baru Setiap Hari</span><span class="accent">✦</span>
+    <span>Bayar Tunai COD — Selamat &amp; Mudah</span><span class="accent">✦</span>
+    <span>Setiap Listing Disahkan Admin</span><span class="accent">✦</span>
+    <span>Jimat Sehingga 70% Harga Asal</span><span class="accent">✦</span>
+    <span>Fesyen Thrift Mesra Alam</span><span class="accent">✦</span>
+    <span>Chat Terus Dengan Penjual</span><span class="accent">✦</span>
+  </div>
+</div>
+
+<!-- CATEGORIES -->
+<section class="section">
+  <div class="section-header">
+    <div>
+      <div class="section-tag">Semak Imbas Mengikut Kategori</div>
+      <h2 class="section-title"><em>Pilihan</em> Beli-belah</h2>
+    </div>
+  </div>
+
+  <div class="cat-grid" style="grid-template-columns: repeat(3, 1fr);">
+    <a href="ecothrift-clothes.html" class="cat-card" style="min-height: 400px; height: 400px; grid-row: span 1; text-decoration: none;">
+      <div class="cat-bg bg-forest" style="font-size:5rem; padding:0; background:none;">
+        <img src="baju.jpeg" alt="Pakaian" style="width:100%; height:100%; object-fit:cover; display:block;">
+      </div>
+      <div class="cat-overlay">
+        <div class="cat-name">Pakaian</div>
+        <div class="cat-count">9,840 produk</div>
+      </div>
+    </a>
+    <a href="ecothrift-pants.html" class="cat-card" style="min-height: 400px; text-decoration: none;">
+      <div class="cat-bg bg-navy" style="font-size:4rem; padding:0; background:none;">
+        <img src="seluar.png" alt="Seluar" style="width:100%; height:100%; object-fit:cover; display:block;">
+      </div>
+      <div class="cat-overlay">
+        <div class="cat-name">Seluar</div>
+        <div class="cat-count">4,210 produk</div>
+      </div>
+    </a>
+    <a href="ecothrift-accessories.html" class="cat-card" style="min-height: 400px; text-decoration: none;">
+      <div class="cat-bg bg-warm" style="font-size:4rem; padding:0; background:none;">
+        <img src="aksesori.png" alt="Aksesori" style="width:100%; height:100%; object-fit:cover; display:block;">
+      </div>
+      <div class="cat-overlay">
+        <div class="cat-name">Aksesori</div>
+        <div class="cat-count">5,620 produk</div>
+      </div>
+    </a>
+  </div>
+</section>
+
+<!-- PRODUCTS -->
+<section class="section" style="padding-top: 0; background: var(--white);">
+  <div class="section-header">
+    <div>
+      <div class="section-tag">Dipilih Khas Untuk Anda</div>
+      <h2 class="section-title">Penemuan <em>Minggu Ini</em></h2>
+    </div>
+    <a href="ecothrift-clothes.html" class="see-all">Lihat Semua</a>
+  </div>
+
+  <div class="product-grid">
+    <div class="product-card">
+      <div class="product-img">
+        <img src="baju1.png" alt="Manchester United Away Jersey" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+        <div class="product-save">♡</div>
+      </div>
+      <div class="product-condition">Seperti Baru</div>
+      <div class="product-name">Manchester United Away Jersey — Adidas</div>
+      <div class="product-price">RM 145 <span class="original">RM 520</span></div>
+    </div>
+    <div class="product-card">
+      <div class="product-img">
+        <img src="seluar2.jpg" alt="Bugleboy Jean Co. Seluar Pendek" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+        <div class="product-save">♡</div>
+      </div>
+      <div class="product-condition">Baik</div>
+      <div class="product-name">Bugleboy Jean Co. Seluar Pendek</div>
+      <div class="product-price">RM 65 <span class="original">RM 189</span></div>
+    </div>
+    <div class="product-card">
+      <div class="product-img">
+        <img src="topi5.jpg" alt="Toronto Blue Jays Cap" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+        <div class="product-save">♡</div>
+      </div>
+      <div class="product-condition">Cemerlang</div>
+      <div class="product-name">Toronto Blue Jays Fitted Cap — MLB</div>
+      <div class="product-price">RM 92 <span class="original">RM 310</span></div>
+    </div>
+    <div class="product-card">
+      <div class="product-img">
+        <img src="seluar1.jpg" alt="Pepe Jeans Baggy" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+        <div class="product-save">♡</div>
+      </div>
+      <div class="product-condition">Seperti Baru</div>
+      <div class="product-name">Pepe Jeans Baggy Vintaj — Biru Muda</div>
+      <div class="product-price">RM 120 <span class="original">RM 380</span></div>
+    </div>
+    <div class="product-card">
+      <div class="product-img">
+        <img src="baju5.png" alt="PSV Eindhoven Jersey" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+        <div class="product-save">♡</div>
+      </div>
+      <div class="product-condition">Baik</div>
+      <div class="product-name">PSV Eindhoven Home Jersey — Adidas Philips</div>
+      <div class="product-price">RM 190 <span class="original">RM 650</span></div>
+    </div>
+    <div class="product-card">
+      <div class="product-img">
+        <img src="topi3.jpg" alt="Nike Bucket Hat" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+        <div class="product-save">♡</div>
+      </div>
+      <div class="product-condition">Cemerlang</div>
+      <div class="product-name">Nike Bucket Hat — Maroon Jalur Emas</div>
+      <div class="product-price">RM 55 <span class="original">RM 185</span></div>
+    </div>
+    <div class="product-card">
+      <div class="product-img">
+        <img src="beg1.png" alt="Nike Backpack" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+        <div class="product-save">♡</div>
+      </div>
+      <div class="product-condition">Seperti Baru</div>
+      <div class="product-name">Nike Backpack — Hitam Merah</div>
+      <div class="product-price">RM 95 <span class="original">RM 310</span></div>
+    </div>
+    <div class="product-card">
+      <div class="product-img">
+        <img src="baju11.png" alt="Stussy LDH Hoodie" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+        <div class="product-save">♡</div>
+      </div>
+      <div class="product-condition">Cemerlang</div>
+      <div class="product-name">Stussy x LDH Studio Hoodie — Putih</div>
+      <div class="product-price">RM 160 <span class="original">RM 510</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<div class="about-strip">
+  <div class="about-left">
+    <div class="section-tag">Mengapa Ecothrift</div>
+    <h2 class="section-title">Fesyen yang<br><em>terbaik</em></h2>
+    <p class="about-text">
+      Kami membina Ecothrift kerana kami percaya gaya dan kemampanan tidak perlu berkompromi. Setiap produk disahkan, dinilai kualitinya, dan ditetapkan harga agar babak seterusnya boleh bermula.
+    </p>
+  </div>
+  <div class="pillars">
+    <div class="pillar">
+      <div class="pillar-icon">🔍</div>
+      <div class="pillar-title">Disahkan</div>
+      <div class="pillar-text">Setiap produk disemak oleh pakar dalaman kami sebelum disenaraikan.</div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">♻️</div>
+      <div class="pillar-title">Kitaran</div>
+      <div class="pillar-text">Perpanjang hayat pakaian. Kurangkan jejak karbon fesyen.</div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">🛡️</div>
+      <div class="pillar-title">Keselamatan COD</div>
+      <div class="pillar-text">Bayar semasa terima. Tiada risiko, wang anda selamat sepenuhnya.</div>
+    </div>
+    <div class="pillar">
+      <div class="pillar-icon">💸</div>
+      <div class="pillar-title">Penjimatan Sebenar</div>
+      <div class="pillar-text">Purata 72% diskaun daripada harga asal. Harga sebenar, nilai sebenar.</div>
+    </div>
+  </div>
+</div>
+
+<!-- BANNER -->
+<div class="banner">
+  <h2 class="banner-title">Ada pakaian yang tidak dipakai lagi? Jual bersama kami.</h2>
+  <a href="ecothrift-sell.html" class="btn-white">Mula Menjual</a>
+</div>
+
+
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Ecothrift. Hak cipta terpelihara.</div>
+    <div class="footer-copy">Privasi · Terma · Kuki</div>
+  </div>
+</footer>
+
+<script src="ecothrift.js"></script>
+<script src="location-selector.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="auth-nav.js"></script>
+</body>
+</html>

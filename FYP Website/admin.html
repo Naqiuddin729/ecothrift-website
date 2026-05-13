@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECOTHRIFT — Admin Panel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --cream: #F5F0E8; --sand: #E8DFD0; --clay: #C4A882;
+    --rust: #B85C3A; --forest: #2D4A3E; --ink: #1A1A18; --smoke: #7A7568;
+  }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; }
+
+  /* NAV */
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 2.5rem; background: var(--ink); color: var(--cream);
+  }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.3rem; font-weight: 900; color: var(--cream); }
+  .nav-logo span { color: var(--rust); font-style: italic; }
+  .nav-badge { font-size: .72rem; background: var(--rust); color: white; padding: .2rem .55rem; border-radius: 2px; font-weight: 500; letter-spacing: .05em; }
+  .nav-right { display: flex; align-items: center; gap: 1rem; font-size: .82rem; color: rgba(245,240,232,.6); }
+  #admin-email { font-weight: 500; color: var(--cream); }
+  .btn-logout { background: none; border: 1px solid rgba(245,240,232,.3); color: var(--cream); padding: .4rem .9rem; border-radius: 2px; cursor: pointer; font-family: 'DM Sans', sans-serif; font-size: .78rem; transition: background .2s; }
+  .btn-logout:hover { background: rgba(255,255,255,.1); }
+
+  /* AUTH GATE */
+  #auth-gate {
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    min-height: calc(100vh - 60px); gap: 1rem; text-align: center; padding: 2rem;
+  }
+  #auth-gate h2 { font-family: 'Playfair Display', serif; font-size: 1.5rem; }
+  #auth-gate p { color: var(--smoke); font-size: .875rem; }
+  .login-box { background: white; border-radius: 6px; padding: 2rem; width: 100%; max-width: 360px; box-shadow: 0 4px 24px rgba(0,0,0,.08); margin-top: .5rem; }
+  .login-box input { width: 100%; border: 1px solid rgba(196,168,130,.4); border-radius: 4px; padding: .65rem .9rem; font-family: 'DM Sans', sans-serif; font-size: .875rem; margin-bottom: .75rem; outline: none; background: var(--cream); }
+  .login-box input:focus { border-color: var(--clay); }
+  .btn-login { width: 100%; background: var(--ink); color: var(--cream); border: none; padding: .8rem; border-radius: 4px; font-family: 'DM Sans', sans-serif; font-size: .875rem; font-weight: 500; cursor: pointer; }
+  .btn-login:hover { background: var(--forest); }
+  #login-err { color: var(--rust); font-size: .78rem; margin-top: .5rem; min-height: 1.2rem; }
+
+  /* MAIN */
+  #admin-ui { display: none; }
+  .admin-container { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+  /* STATS */
+  .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; margin-bottom: 2rem; }
+  .stat-card { background: white; border-radius: 6px; padding: 1.25rem 1.5rem; border-left: 3px solid var(--clay); }
+  .stat-num { font-family: 'Playfair Display', serif; font-size: 2rem; font-weight: 900; line-height: 1; }
+  .stat-label { font-size: .75rem; color: var(--smoke); text-transform: uppercase; letter-spacing: .08em; margin-top: .3rem; }
+  .stat-card.pending { border-color: #E8A020; }
+  .stat-card.approved { border-color: var(--forest); }
+  .stat-card.rejected { border-color: var(--rust); }
+
+  /* TABS */
+  .tab-bar { display: flex; gap: 0; border-bottom: 2px solid var(--sand); margin-bottom: 1.5rem; }
+  .tab-btn { padding: .65rem 1.5rem; font-family: 'DM Sans', sans-serif; font-size: .82rem; font-weight: 500; letter-spacing: .06em; text-transform: uppercase; cursor: pointer; background: none; border: none; color: var(--smoke); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all .2s; }
+  .tab-btn.active { color: var(--ink); border-bottom-color: var(--ink); }
+  .tab-btn:hover { color: var(--ink); }
+  .tab-btn .badge { display: inline-block; background: var(--rust); color: white; font-size: .65rem; padding: .1rem .4rem; border-radius: 10px; margin-left: .4rem; }
+
+  /* LISTINGS TABLE */
+  .listings-grid { display: flex; flex-direction: column; gap: 1rem; }
+  .listing-card { background: white; border-radius: 6px; padding: 1.25rem; display: grid; grid-template-columns: 80px 1fr auto; gap: 1.25rem; align-items: start; box-shadow: 0 1px 4px rgba(0,0,0,.06); }
+  .listing-img { width: 80px; height: 80px; border-radius: 4px; object-fit: cover; background: var(--sand); display: flex; align-items: center; justify-content: center; font-size: 1.5rem; flex-shrink: 0; }
+  .listing-img img { width: 100%; height: 100%; object-fit: cover; border-radius: 4px; }
+  .listing-info h3 { font-size: .95rem; font-weight: 600; margin-bottom: .25rem; }
+  .listing-meta { display: flex; flex-wrap: wrap; gap: .4rem; margin-bottom: .5rem; }
+  .meta-tag { font-size: .7rem; background: var(--sand); padding: .15rem .5rem; border-radius: 2px; color: var(--smoke); font-weight: 500; }
+  .meta-tag.price { background: rgba(45,74,62,.1); color: var(--forest); font-weight: 700; }
+  .listing-seller { font-size: .78rem; color: var(--smoke); }
+  .listing-seller span { color: var(--ink); font-weight: 500; }
+  .listing-desc { font-size: .78rem; color: var(--smoke); line-height: 1.5; margin-top: .4rem; max-height: 3rem; overflow: hidden; }
+  .listing-date { font-size: .7rem; color: var(--smoke); margin-top: .3rem; }
+  .listing-actions { display: flex; flex-direction: column; gap: .5rem; min-width: 110px; }
+  .btn-approve { background: var(--forest); color: white; border: none; padding: .6rem 1rem; border-radius: 4px; font-family: 'DM Sans', sans-serif; font-size: .8rem; font-weight: 500; cursor: pointer; transition: background .2s; }
+  .btn-approve:hover { background: #1e3328; }
+  .btn-reject { background: none; border: 1px solid var(--rust); color: var(--rust); padding: .6rem 1rem; border-radius: 4px; font-family: 'DM Sans', sans-serif; font-size: .8rem; font-weight: 500; cursor: pointer; transition: all .2s; }
+  .btn-reject:hover { background: var(--rust); color: white; }
+  .btn-delete { background: none; border: 1px solid #888; color: #888; padding: .45rem .75rem; border-radius: 4px; font-family: 'DM Sans', sans-serif; font-size: .72rem; font-weight: 500; cursor: pointer; transition: all .2s; margin-top: .25rem; }
+  .btn-delete:hover { background: #c00; border-color: #c00; color: white; }
+  .status-badge { display: inline-block; padding: .3rem .75rem; border-radius: 2px; font-size: .72rem; font-weight: 600; letter-spacing: .05em; text-transform: uppercase; }
+  .status-badge.pending  { background: rgba(232,160,32,.15);  color: #A06010; }
+  .status-badge.approved { background: rgba(45,74,62,.12);    color: var(--forest); }
+  .status-badge.rejected { background: rgba(184,92,58,.12);   color: var(--rust); }
+
+  .empty-state { text-align: center; padding: 4rem 2rem; color: var(--smoke); }
+  .empty-state div { font-size: 2.5rem; margin-bottom: .75rem; }
+
+  /* TOAST */
+  .toast { position: fixed; bottom: 1.5rem; right: 1.5rem; background: var(--ink); color: var(--cream); padding: .75rem 1.25rem; border-radius: 4px; font-size: .82rem; font-weight: 500; z-index: 999; opacity: 0; transform: translateY(8px); transition: all .25s; pointer-events: none; }
+  .toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div style="display:flex;align-items:center;gap:.75rem;">
+    <span class="nav-logo">ECO<span>THRIFT</span></span>
+    <span class="nav-badge">ADMIN</span>
+  </div>
+  <div class="nav-right">
+    <span id="admin-email"></span>
+    <button class="btn-logout" id="logout-btn">Log Keluar</button>
+  </div>
+</nav>
+
+<!-- AUTH GATE -->
+<div id="auth-gate">
+  <div style="font-size:2.5rem;">🔐</div>
+  <h2>Admin Ecothrift</h2>
+  <p>Log masuk dengan akaun admin untuk mengurus senarai.</p>
+  <div class="login-box">
+    <input type="email" id="admin-login-email" placeholder="Emel admin" autocomplete="email">
+    <input type="password" id="admin-login-pw" placeholder="Kata laluan"
+      onkeydown="if(event.key==='Enter') adminLogin()">
+    <button class="btn-login" onclick="adminLogin()">Log Masuk</button>
+    <div id="login-err"></div>
+  </div>
+</div>
+
+<!-- ADMIN UI -->
+<div id="admin-ui">
+  <div class="admin-container">
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card">
+        <div class="stat-num" id="stat-total">—</div>
+        <div class="stat-label">Jumlah Senarai</div>
+      </div>
+      <div class="stat-card pending">
+        <div class="stat-num" id="stat-pending">—</div>
+        <div class="stat-label">Menunggu Semakan</div>
+      </div>
+      <div class="stat-card approved">
+        <div class="stat-num" id="stat-approved">—</div>
+        <div class="stat-label">Disahkan</div>
+      </div>
+      <div class="stat-card rejected">
+        <div class="stat-num" id="stat-rejected">—</div>
+        <div class="stat-label">Ditolak</div>
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tab-bar">
+      <button class="tab-btn active" data-tab="pending" onclick="switchTab('pending',this)">
+        Menunggu <span class="badge" id="badge-pending">0</span>
+      </button>
+      <button class="tab-btn" data-tab="approved" onclick="switchTab('approved',this)">Disahkan</button>
+      <button class="tab-btn" data-tab="rejected" onclick="switchTab('rejected',this)">Ditolak</button>
+      <button class="tab-btn" data-tab="all" onclick="switchTab('all',this)">Semua</button>
+    </div>
+
+    <div class="listings-grid" id="listings-grid"></div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>emailjs.init('Ud3tVlqN3j-UnT-dD');</script>
+<script>
+  // ── Admin emails yang dibenarkan ──────────────────
+  const ADMIN_EMAILS = ['naqiuddinellis18@gmail.com'];
+
+  let currentTab = 'pending';
+  let allListings = [];
+
+  // ── AUTH ──────────────────────────────────────────
+  auth.onAuthStateChanged(user => {
+    if (user && ADMIN_EMAILS.includes(user.email)) {
+      document.getElementById('auth-gate').style.display = 'none';
+      document.getElementById('admin-ui').style.display = 'block';
+      document.getElementById('admin-email').textContent = user.email;
+      loadListings();
+    } else if (user) {
+      // Logged in but not admin
+      showError('Akaun ini tidak mempunyai akses admin.');
+      auth.signOut();
+    } else {
+      document.getElementById('auth-gate').style.display = 'flex';
+      document.getElementById('admin-ui').style.display = 'none';
+    }
+  });
+
+  window.adminLogin = function () {
+    const email = document.getElementById('admin-login-email').value.trim();
+    const pw    = document.getElementById('admin-login-pw').value;
+    showError('');
+    if (!email || !pw) { showError('Sila isi semua maklumat.'); return; }
+    auth.signInWithEmailAndPassword(email, pw)
+      .catch(err => showError('Emel atau kata laluan salah.'));
+  };
+
+  document.getElementById('logout-btn').addEventListener('click', () => {
+    auth.signOut();
+  });
+
+  function showError(msg) {
+    document.getElementById('login-err').textContent = msg;
+  }
+
+  // ── LOAD LISTINGS ─────────────────────────────────
+  function loadListings() {
+    db.collection('listings').orderBy('createdAt', 'desc')
+      .onSnapshot(snap => {
+        allListings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+        updateStats();
+        renderTab(currentTab);
+      }, err => {
+        // fallback without orderBy if index not ready
+        db.collection('listings').onSnapshot(snap => {
+          allListings = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+          allListings.sort((a,b) => (b.createdAt?.seconds||0) - (a.createdAt?.seconds||0));
+          updateStats();
+          renderTab(currentTab);
+        });
+      });
+  }
+
+  // ── STATS ─────────────────────────────────────────
+  function updateStats() {
+    const total    = allListings.length;
+    const pending  = allListings.filter(l => l.status === 'pending').length;
+    const approved = allListings.filter(l => l.status === 'approved').length;
+    const rejected = allListings.filter(l => l.status === 'rejected').length;
+    document.getElementById('stat-total').textContent    = total;
+    document.getElementById('stat-pending').textContent  = pending;
+    document.getElementById('stat-approved').textContent = approved;
+    document.getElementById('stat-rejected').textContent = rejected;
+    document.getElementById('badge-pending').textContent = pending;
+  }
+
+  // ── TABS ──────────────────────────────────────────
+  window.switchTab = function (tab, btn) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+    renderTab(tab);
+  };
+
+  function renderTab(tab) {
+    const filtered = tab === 'all'
+      ? allListings
+      : allListings.filter(l => l.status === tab);
+    renderListings(filtered);
+  }
+
+  // ── RENDER ────────────────────────────────────────
+  function renderListings(listings) {
+    const grid = document.getElementById('listings-grid');
+    if (!listings.length) {
+      grid.innerHTML = `<div class="empty-state"><div>📭</div><p>Tiada senarai dalam kategori ini.</p></div>`;
+      return;
+    }
+    grid.innerHTML = listings.map(l => {
+      const imgHTML = l.photoURLs && l.photoURLs[0]
+        ? `<img src="${l.photoURLs[0]}" alt="${escHtml(l.category||'')}">`
+        : `<div class="listing-img" style="background:var(--sand);display:flex;align-items:center;justify-content:center;">👕</div>`;
+
+      const date = l.createdAt ? new Date(l.createdAt.seconds * 1000).toLocaleString('ms-MY', {
+        day: 'numeric', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit'
+      }) : '—';
+
+      const actionBtns = l.status === 'pending'
+        ? `<button class="btn-approve" onclick="updateStatus('${l.id}','approved')">✓ Sahkan</button>
+           <button class="btn-reject"  onclick="updateStatus('${l.id}','rejected')">✕ Tolak</button>
+           <button class="btn-delete"  onclick="deleteListing('${l.id}')">🗑 Padam</button>`
+        : `<span class="status-badge ${l.status}">${l.status === 'approved' ? 'Disahkan' : 'Ditolak'}</span>
+           ${l.status === 'rejected'
+             ? `<button class="btn-approve" style="font-size:.72rem;padding:.45rem .75rem;" onclick="updateStatus('${l.id}','approved')">Sahkan Semula</button>`
+             : ''}
+           <button class="btn-delete" onclick="deleteListing('${l.id}')">🗑 Padam</button>`;
+
+      return `
+        <div class="listing-card" id="card-${l.id}">
+          <div class="listing-img">${imgHTML}</div>
+          <div class="listing-info">
+            <h3>${escHtml(l.category || 'Tiada Kategori')}</h3>
+            <div class="listing-meta">
+              <span class="meta-tag price">RM ${l.askingPrice || '—'}</span>
+              ${l.size      ? `<span class="meta-tag">${escHtml(l.size)}</span>` : ''}
+              ${l.condition ? `<span class="meta-tag">${escHtml(l.condition)}</span>` : ''}
+              ${l.retailPrice ? `<span class="meta-tag">Harga asal: RM${l.retailPrice}</span>` : ''}
+            </div>
+            <div class="listing-seller">Penjual: <span>${escHtml(l.sellerName || '—')}</span>
+              &nbsp;·&nbsp; <span>${escHtml(l.sellerEmail || '—')}</span></div>
+            ${l.description ? `<div class="listing-desc">${escHtml(l.description)}</div>` : ''}
+            <div class="listing-date">📅 ${date}</div>
+            ${l.photoURLs && l.photoURLs.length > 1
+              ? `<div style="display:flex;gap:.4rem;margin-top:.5rem;">
+                  ${l.photoURLs.slice(1).map(u => `<img src="${u}" style="width:40px;height:40px;object-fit:cover;border-radius:3px;">`).join('')}
+                 </div>` : ''}
+          </div>
+          <div class="listing-actions">${actionBtns}</div>
+        </div>`;
+    }).join('');
+  }
+
+  // ── UPDATE STATUS ─────────────────────────────────
+  window.updateStatus = function (id, status) {
+    const ref = db.collection('listings').doc(id);
+    ref.update({
+      status: status,
+      reviewedAt: firebase.firestore.FieldValue.serverTimestamp()
+    }).then(() => {
+      showToast(status === 'approved' ? '✓ Listing disahkan!' : '✕ Listing ditolak.');
+      if (status === 'approved') {
+        ref.get().then(snap => {
+          const d = snap.data();
+          if (!d || !d.sellerEmail) return;
+          emailjs.send('service_e936r3a', 'template_v2w9w8n', {
+            email:        d.sellerEmail,
+            seller_name:  d.sellerName  || 'Penjual',
+            listing_name: d.listingName || d.category || 'Listing anda',
+            price:        d.askingPrice ? parseFloat(d.askingPrice).toFixed(2) : '—'
+          }).catch(err => console.warn('EmailJS error:', err));
+        });
+      }
+    }).catch(err => showToast('Ralat: ' + err.message));
+  };
+
+  // ── DELETE LISTING ────────────────────────────────
+  window.deleteListing = function (id) {
+    if (!confirm('Padam listing ini secara kekal?')) return;
+    db.collection('listings').doc(id).delete()
+      .then(() => {
+        const card = document.getElementById('card-' + id);
+        if (card) card.remove();
+        showToast('Listing dipadam.');
+      })
+      .catch(err => showToast('Ralat: ' + err.message));
+  };
+
+  // ── HELPERS ───────────────────────────────────────
+  function escHtml(str) {
+    return String(str||'')
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;')
+      .replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+  }
+
+  function showToast(msg) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.classList.add('show');
+    setTimeout(() => t.classList.remove('show'), 2500);
+  }
+</script>
+</body>
+</html>
