@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="ms">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECOTHRIFT — Log Masuk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-analytics-compat.js"></script>
+<script src="firebase-config.js"></script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --cream: #F5F0E8; --sand: #E8DFD0; --clay: #C4A882;
+    --rust: #B85C3A; --forest: #2D4A3E; --ink: #1A1A18;
+    --smoke: #7A7568; --white: #FEFCF8;
+  }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'DM Sans', sans-serif; background: var(--cream); color: var(--ink); min-height: 100vh; overflow-x: hidden; }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.4rem 3rem;
+    background: rgba(245,240,232,0.88); backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(196,168,130,0.25);
+  }
+  .nav-logo { font-family: 'Playfair Display', serif; font-size: 1.6rem; font-weight: 900; letter-spacing: -0.03em; color: var(--ink); text-decoration: none; }
+  .nav-logo span { color: var(--rust); font-style: italic; }
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a { font-size: 0.85rem; font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase; color: var(--smoke); text-decoration: none; transition: color 0.2s; }
+  .nav-links a:hover { color: var(--ink); }
+  .cart-icon { position: relative; cursor: pointer; color: var(--ink); font-size: 1.4rem; }
+  .cart-badge { position: absolute; top: -6px; right: -8px; background: var(--rust); color: white; width: 16px; height: 16px; border-radius: 50%; font-size: 0.65rem; font-weight: 500; display: flex; align-items: center; justify-content: center; }
+
+  /* PAGE LAYOUT */
+  .page {
+    min-height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 6rem 2rem 3rem;
+  }
+
+  /* LEFT PANEL */
+  .left-tag::before { content: ''; width: 24px; height: 1px; background: var(--clay); }
+
+  /* RIGHT PANEL */
+  .right-panel {
+    background: var(--white);
+    border-radius: 6px;
+    padding: 3rem;
+    width: 100%;
+    max-width: 480px;
+    box-shadow: 0 8px 40px rgba(26,26,24,0.1);
+  }
+
+  .auth-box { width: 100%; max-width: 420px; }
+
+  /* TABS */
+  .auth-tabs {
+    display: flex; gap: 0;
+    border: 1px solid rgba(196,168,130,0.4);
+    border-radius: 3px; overflow: hidden;
+    margin-bottom: 2.5rem;
+  }
+  .tab-btn {
+    flex: 1; padding: 0.75rem;
+    background: transparent; border: none;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    cursor: pointer; color: var(--smoke);
+    transition: all 0.2s;
+  }
+  .tab-btn.active { background: var(--ink); color: var(--cream); }
+
+  /* PANELS */
+  .auth-panel { display: none; }
+  .auth-panel.active { display: block; }
+
+  .panel-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.8rem; font-weight: 900;
+    letter-spacing: -0.02em; margin-bottom: 0.4rem;
+  }
+  .panel-sub { font-size: 0.88rem; font-weight: 300; color: var(--smoke); margin-bottom: 2rem; line-height: 1.6; }
+
+  /* FORM */
+  .form-group { margin-bottom: 1.1rem; }
+  .form-label {
+    font-size: 0.72rem; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--smoke); margin-bottom: 0.45rem; display: block;
+  }
+  .form-input {
+    width: 100%; padding: 0.85rem 1rem;
+    background: var(--sand); border: 1px solid rgba(196,168,130,0.4);
+    border-radius: 2px; font-family: 'DM Sans', sans-serif;
+    font-size: 0.9rem; color: var(--ink); outline: none;
+    transition: border-color 0.2s;
+  }
+  .form-input:focus { border-color: var(--clay); background: #EDE6D8; }
+  .form-input::placeholder { color: rgba(122,117,104,0.6); }
+
+  .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+
+  .password-wrap { position: relative; }
+  .toggle-pw {
+    position: absolute; right: 0.85rem; top: 50%; transform: translateY(-50%);
+    background: none; border: none; cursor: pointer;
+    font-size: 0.85rem; color: var(--smoke);
+  }
+
+  .forgot-link {
+    display: block; text-align: right;
+    font-size: 0.78rem; color: var(--rust);
+    text-decoration: none; margin-top: 0.4rem;
+    transition: opacity 0.2s;
+  }
+  .forgot-link:hover { opacity: 0.7; }
+
+  .submit-btn {
+    width: 100%; background: var(--ink); color: var(--cream);
+    border: none; padding: 1rem;
+    font-family: 'DM Sans', sans-serif; font-size: 0.88rem;
+    font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+    cursor: pointer; border-radius: 2px; margin-top: 1.5rem;
+    transition: background 0.2s, transform 0.15s;
+  }
+  .submit-btn:hover { background: var(--rust); transform: translateY(-1px); }
+  .submit-btn:active { transform: translateY(0); }
+
+  /* DIVIDER */
+
+  /* SOCIAL LOGIN */
+
+  /* TERMS NOTE */
+  .terms-note {
+    font-size: 0.75rem; font-weight: 300; color: var(--smoke);
+    line-height: 1.6; margin-top: 1.5rem; text-align: center;
+  }
+  .terms-note a { color: var(--rust); text-decoration: none; }
+  .terms-note a:hover { text-decoration: underline; }
+
+  /* PASSWORD STRENGTH */
+  .strength-bar { display: flex; gap: 3px; margin-top: 0.5rem; }
+  .strength-seg {
+    flex: 1; height: 3px; border-radius: 2px;
+    background: rgba(196,168,130,0.25); transition: background 0.3s;
+  }
+  .strength-label { font-size: 0.72rem; color: var(--smoke); margin-top: 0.3rem; }
+
+  /* SUCCESS STATE */
+  .success-state {
+    text-align: center; padding: 2rem 0; display: none;
+  }
+  .success-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+  .success-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem; font-weight: 700; margin-bottom: 0.75rem;
+  }
+  .success-sub { font-size: 0.9rem; color: var(--smoke); line-height: 1.7; margin-bottom: 2rem; }
+  .go-home-btn {
+    display: inline-block; background: var(--forest); color: var(--cream);
+    text-decoration: none; padding: 0.9rem 2rem;
+    font-family: 'DM Sans', sans-serif; font-size: 0.85rem;
+    font-weight: 500; letter-spacing: 0.08em; text-transform: uppercase;
+    border-radius: 2px; transition: background 0.2s;
+  }
+  .go-home-btn:hover { background: var(--rust); }
+
+  /* FOOTER */
+  footer { background: var(--ink); padding: 1.5rem 5rem; }
+  .footer-bottom { display: flex; align-items: center; justify-content: space-between; }
+  .footer-copy { font-size: 0.78rem; color: rgba(245,240,232,0.3); }
+
+  /* ANIMATIONS */
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(16px); } to { opacity: 1; transform: none; } }
+  .auth-box { animation: fadeUp 0.5s ease both; }
+
+  /* Error state */
+  .form-input.error { border-color: var(--rust); background: rgba(184,92,58,0.05); }
+  .form-error { font-size: 0.75rem; color: var(--rust); margin-top: 0.3rem; display: none; }
+  .form-error.show { display: block; }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="thrift-fashion.html">ECO<span>THRIFT</span></a>
+  <ul class="nav-links">
+    <li><a href="thrift-fashion.html">Laman Utama</a></li>
+    <li><a href="ecothrift-clothes.html">Pakaian</a></li>
+    <li><a href="ecothrift-pants.html">Seluar</a></li>
+    <li><a href="ecothrift-accessories.html">Aksesori</a></li>
+    <li><a href="ecothrift-sell.html">Jual</a></li>
+    <li><a href="kegemaran.html">❤ Kegemaran</a></li>
+  </ul>
+  <div class="cart-icon">🛍<div class="cart-badge">3</div></div>
+</nav>
+
+<div class="page">
+
+  <!-- RIGHT PANEL -->
+  <div class="right-panel">
+    <div class="auth-box">
+
+      <!-- TABS -->
+      <div class="auth-tabs">
+        <button class="tab-btn active" id="tab-login" onclick="switchTab('login')">Log Masuk</button>
+        <button class="tab-btn" id="tab-register" onclick="switchTab('register')">Daftar</button>
+      </div>
+
+      <!-- LOGIN PANEL -->
+      <div class="auth-panel active" id="panel-login">
+        <div class="panel-title">Selamat kembali</div>
+        <p class="panel-sub">Log masuk ke akaun Ecothrift anda untuk meneruskan beli-belah.</p>
+
+        <div class="form-group">
+          <label class="form-label">Alamat Emel</label>
+          <input type="email" class="form-input" id="login-email" placeholder="emel@anda.com">
+          <div class="form-error" id="login-email-err">Sila masukkan alamat emel yang sah.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Kata Laluan</label>
+          <div class="password-wrap">
+            <input type="password" class="form-input" id="login-pw" placeholder="Kata laluan anda">
+            <button class="toggle-pw" onclick="togglePw('login-pw', this)" type="button">👁</button>
+          </div>
+          <div class="form-error" id="login-pw-err">Sila masukkan kata laluan anda.</div>
+          <a href="javascript:void(0)" class="forgot-link" onclick="showForgot()">Lupa kata laluan?</a>
+        </div>
+
+        <button class="submit-btn" onclick="doLogin()">Log Masuk</button>
+
+        <p class="terms-note">
+          Dengan log masuk, anda bersetuju dengan <a href="terms.html">Terma Perkhidmatan</a>
+          dan <a href="privacy.html">Dasar Privasi</a> kami.
+        </p>
+      </div>
+
+      <!-- REGISTER PANEL -->
+      <div class="auth-panel" id="panel-register">
+        <div class="panel-title">Sertai Ecothrift</div>
+        <p class="panel-sub">Percuma untuk mendaftar. Mula jimat hari ini.</p>
+
+        <div class="form-row">
+          <div class="form-group">
+            <label class="form-label">Nama Pertama</label>
+            <input type="text" class="form-input" id="reg-fname" placeholder="cth. Ahmad">
+            <div class="form-error" id="reg-fname-err">Ruangan ini wajib diisi.</div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">Nama Akhir</label>
+            <input type="text" class="form-input" id="reg-lname" placeholder="cth. Razali">
+            <div class="form-error" id="reg-lname-err">Ruangan ini wajib diisi.</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Alamat Emel</label>
+          <input type="email" class="form-input" id="reg-email" placeholder="emel@anda.com">
+          <div class="form-error" id="reg-email-err">Sila masukkan alamat emel yang sah.</div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Nombor Telefon (Pilihan)</label>
+          <input type="tel" class="form-input" id="reg-phone" placeholder="cth. 012-3456789">
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Kata Laluan</label>
+          <div class="password-wrap">
+            <input type="password" class="form-input" id="reg-pw" placeholder="Cipta kata laluan" oninput="checkStrength(this.value)">
+            <button class="toggle-pw" onclick="togglePw('reg-pw', this)" type="button">👁</button>
+          </div>
+          <div class="form-error" id="reg-pw-err">Kata laluan mestilah sekurang-kurangnya 8 aksara.</div>
+          <div class="strength-bar">
+            <div class="strength-seg" id="seg1"></div>
+            <div class="strength-seg" id="seg2"></div>
+            <div class="strength-seg" id="seg3"></div>
+            <div class="strength-seg" id="seg4"></div>
+          </div>
+          <div class="strength-label" id="strength-label"></div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Sahkan Kata Laluan</label>
+          <div class="password-wrap">
+            <input type="password" class="form-input" id="reg-pw2" placeholder="Ulang kata laluan">
+            <button class="toggle-pw" onclick="togglePw('reg-pw2', this)" type="button">👁</button>
+          </div>
+          <div class="form-error" id="reg-pw2-err">Kata laluan tidak sepadan.</div>
+        </div>
+
+        <button class="submit-btn" onclick="doRegister()">Daftar Akaun</button>
+
+        <p class="terms-note">
+          Dengan mendaftar, anda bersetuju dengan <a href="terms.html">Terma Perkhidmatan</a>
+          dan <a href="privacy.html">Dasar Privasi</a> kami.
+        </p>
+      </div>
+
+      <!-- SUCCESS STATE -->
+      <div class="success-state" id="success-state">
+        <div class="success-icon">🎉</div>
+        <div class="success-title" id="success-title">Selamat datang!</div>
+        <p class="success-sub" id="success-sub">Akaun anda telah berjaya dicipta. Mula beli-belah sekarang.</p>
+        <a href="thrift-fashion.html" class="go-home-btn">Ke Laman Utama</a>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<footer>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Ecothrift. Hak cipta terpelihara.</div>
+    <div class="footer-copy">Privasi · Terma · Kuki</div>
+  </div>
+</footer>
+
+<script src="ecothrift.js"></script>
+<script src="location-selector.js"></script>
+<script>
+  /* ── TAB SWITCHING ─────────────────────────── */
+  function switchTab(tab) {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.auth-panel').forEach(p => p.classList.remove('active'));
+    document.getElementById('tab-' + tab).classList.add('active');
+    document.getElementById('panel-' + tab).classList.add('active');
+    clearErrors();
+  }
+
+  /* ── TOGGLE PASSWORD VISIBILITY ────────────── */
+  function togglePw(id, btn) {
+    const input = document.getElementById(id);
+    if (input.type === 'password') { input.type = 'text'; btn.textContent = '🙈'; }
+    else { input.type = 'password'; btn.textContent = '👁'; }
+  }
+
+  /* ── CLEAR ERRORS ──────────────────────────── */
+  function clearErrors() {
+    document.querySelectorAll('.form-error').forEach(e => e.classList.remove('show'));
+    document.querySelectorAll('.form-input').forEach(i => i.classList.remove('error'));
+  }
+
+  function showError(inputId, errId) {
+    const input = document.getElementById(inputId);
+    const err   = document.getElementById(errId);
+    if (input) { input.classList.add('error'); input.focus(); }
+    if (err)   err.classList.add('show');
+    return false;
+  }
+
+  /* ── PASSWORD STRENGTH ─────────────────────── */
+  function checkStrength(val) {
+    const segs   = [1,2,3,4].map(i => document.getElementById('seg'+i));
+    const label  = document.getElementById('strength-label');
+    const colors = ['#B85C3A','#C4A882','#6DBF8A','#2D4A3E'];
+    const labels = ['Lemah','Sederhana','Kuat','Sangat Kuat'];
+    let score = 0;
+    if (val.length >= 8) score++;
+    if (/[A-Z]/.test(val)) score++;
+    if (/[0-9]/.test(val)) score++;
+    if (/[^A-Za-z0-9]/.test(val)) score++;
+    segs.forEach((seg, i) => {
+      seg.style.background = i < score ? colors[score - 1] : 'rgba(196,168,130,0.25)';
+    });
+    label.textContent = val.length ? labels[score - 1] || '' : '';
+    label.style.color = score ? colors[score - 1] : 'var(--smoke)';
+  }
+
+  /* ── LOGIN ─────────────────────────────────── */
+  async function doLogin() {
+    clearErrors();
+    const email = document.getElementById('login-email').value.trim();
+    const pw    = document.getElementById('login-pw').value;
+    let valid = true;
+    if (!email || !email.includes('@')) { showError('login-email','login-email-err'); valid = false; }
+    if (!pw) { showError('login-pw','login-pw-err'); valid = false; }
+    if (!valid) return;
+
+    const btn = document.querySelector('#panel-login .submit-btn');
+    btn.textContent = 'Sedang log masuk…';
+    btn.disabled = true;
+    try {
+      const cred = await auth.signInWithEmailAndPassword(email, pw);
+      await db.collection('users').doc(cred.user.uid).set({
+        email: cred.user.email,
+        displayName: cred.user.displayName || '',
+        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
+      window.location.href = 'thrift-fashion.html';
+    } catch (err) {
+      btn.textContent = 'Log Masuk';
+      btn.disabled = false;
+      console.error('Login error:', err);
+      const msg = (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential')
+        ? 'Emel atau kata laluan salah.' : 'Ralat: ' + err.message;
+      typeof ECO !== 'undefined' && ECO.toast(msg, 'error', 3000);
+    }
+  }
+
+  /* ── REGISTER ──────────────────────────────── */
+  async function doRegister() {
+    clearErrors();
+    const fname = document.getElementById('reg-fname').value.trim();
+    const lname = document.getElementById('reg-lname').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const pw    = document.getElementById('reg-pw').value;
+    const pw2   = document.getElementById('reg-pw2').value;
+    let valid = true;
+    if (!fname) { showError('reg-fname','reg-fname-err'); valid = false; }
+    if (!lname) { showError('reg-lname','reg-lname-err'); valid = false; }
+    if (!email || !email.includes('@')) { showError('reg-email','reg-email-err'); valid = false; }
+    if (!pw || pw.length < 8) { showError('reg-pw','reg-pw-err'); valid = false; }
+    if (pw !== pw2) { showError('reg-pw2','reg-pw2-err'); valid = false; }
+    if (!valid) return;
+
+    const btn = document.querySelector('#panel-register .submit-btn');
+    btn.textContent = 'Mendaftar…';
+    btn.disabled = true;
+    try {
+      const cred = await auth.createUserWithEmailAndPassword(email, pw);
+      await cred.user.updateProfile({ displayName: fname + ' ' + lname });
+      await db.collection('users').doc(cred.user.uid).set({
+        firstName: fname,
+        lastName: lname,
+        email: email,
+        displayName: fname + ' ' + lname,
+        createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+        lastLogin: firebase.firestore.FieldValue.serverTimestamp()
+      }).catch(e => console.error('Firestore write error:', e));
+      await auth.signOut();
+      btn.textContent = 'Daftar Akaun';
+      btn.disabled = false;
+      switchTab('login');
+      document.getElementById('login-email').value = email;
+      typeof ECO !== 'undefined' && ECO.toast('Akaun berjaya dicipta! Sila log masuk.', 'success', 3000);
+    } catch (err) {
+      btn.textContent = 'Daftar Akaun';
+      btn.disabled = false;
+      const msg = err.code === 'auth/email-already-in-use'
+        ? 'Emel ini sudah didaftarkan.' : 'Ralat: ' + err.message;
+      typeof ECO !== 'undefined' && ECO.toast(msg, 'error', 3000);
+    }
+  }
+
+  /* ── SOCIAL LOGIN ──────────────────────────── */
+  async function socialLogin(provider) {
+    try {
+      const p = provider === 'Google' ? new firebase.auth.GoogleAuthProvider() : null;
+      if (!p) return;
+      await auth.signInWithPopup(p);
+      window.location.href = 'thrift-fashion.html';
+    } catch (err) {
+      typeof ECO !== 'undefined' && ECO.toast('Log masuk ' + provider + ' gagal.', 'error', 2500);
+    }
+  }
+
+  /* ── FORGOT PASSWORD ───────────────────────── */
+  function showForgot() {
+    const email = document.getElementById('login-email').value.trim();
+    if (!email || !email.includes('@')) {
+      document.getElementById('login-email').focus();
+      typeof ECO !== 'undefined' && ECO.toast('Masukkan emel anda dahulu', 'warn', 2000);
+      return;
+    }
+    typeof ECO !== 'undefined' && ECO.toast('Pautan tetapan semula dihantar ke ' + email, 'success', 3500);
+  }
+
+  /* ── SUCCESS STATE ─────────────────────────── */
+  function showSuccess(title, sub) {
+    document.querySelector('.auth-tabs').style.display = 'none';
+    document.querySelectorAll('.auth-panel').forEach(p => p.style.display = 'none');
+    const s = document.getElementById('success-state');
+    document.getElementById('success-title').textContent = title;
+    document.getElementById('success-sub').textContent = sub;
+    s.style.display = 'block';
+    typeof ECO !== 'undefined' && ECO.toast('🎉 ' + title, 'success', 3500);
+  }
+
+  // Auto-focus first field
+  document.getElementById('login-email')?.focus();
+</script>
+</body>
+</html>

@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ECOTHRIFT — Pakaian</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --cream: #F5F0E8;
+    --sand: #E8DFD0;
+    --clay: #C4A882;
+    --rust: #B85C3A;
+    --forest: #2D4A3E;
+    --ink: #1A1A18;
+    --smoke: #7A7568;
+    --white: #FEFCF8;
+  }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'DM Sans', sans-serif;
+    background: var(--cream);
+    color: var(--ink);
+    overflow-x: hidden;
+  }
+
+  /* NAV */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1.4rem 3rem;
+    background: rgba(245, 240, 232, 0.88);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid rgba(196, 168, 130, 0.25);
+  }
+
+  .nav-logo {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.6rem; font-weight: 900;
+    letter-spacing: -0.03em; color: var(--ink);
+    text-decoration: none;
+  }
+  .nav-logo span { color: var(--rust); font-style: italic; }
+
+  .nav-links { display: flex; gap: 2.5rem; list-style: none; }
+  .nav-links a {
+    font-size: 0.85rem; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--smoke); text-decoration: none;
+    transition: color 0.2s;
+  }
+  .nav-links a:hover { color: var(--ink); }
+  .nav-links a.active { color: var(--ink); border-bottom: 2px solid var(--rust); padding-bottom: 2px; }
+
+  .nav-actions { display: flex; align-items: center; gap: 1.2rem; }
+
+  .btn-nav {
+    background: var(--ink); color: var(--cream);
+    border: none; padding: 0.65rem 1.4rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    cursor: pointer; transition: background 0.2s, transform 0.15s;
+    border-radius: 2px;
+  }
+  .btn-nav:hover { background: var(--rust); transform: translateY(-1px); }
+
+  .cart-icon { position: relative; cursor: pointer; color: var(--ink); font-size: 1.2rem; }
+  .cart-badge {
+    position: absolute; top: -6px; right: -8px;
+    background: var(--rust); color: white;
+    width: 16px; height: 16px; border-radius: 50%;
+    font-size: 0.65rem; font-weight: 500;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* PAGE HEADER */
+  .halaman-header {
+    padding: 8rem 5rem 3rem;
+    background: var(--white);
+    border-bottom: 1px solid rgba(196,168,130,0.2);
+  }
+
+  .breadcrumb {
+    display: flex; align-items: center; gap: 0.5rem;
+    font-size: 0.78rem; font-weight: 500;
+    letter-spacing: 0.08em; text-transform: uppercase;
+    color: var(--smoke); margin-bottom: 1.5rem;
+  }
+  .breadcrumb a { color: var(--smoke); text-decoration: none; }
+  .breadcrumb a:hover { color: var(--ink); }
+  .breadcrumb span { color: var(--clay); }
+
+  .halaman-header-inner {
+    display: flex; align-items: flex-end; justify-content: space-between;
+  }
+
+  .halaman-title {
+    font-family: 'Playfair Display', serif;
+    font-size: 3.5rem; font-weight: 900;
+    letter-spacing: -0.03em; line-height: 1;
+  }
+  .halaman-title em { font-style: italic; color: var(--rust); }
+
+  .halaman-meta {
+    display: flex; align-items: center; gap: 2rem;
+  }
+
+  .result-count {
+    font-size: 0.85rem; color: var(--smoke);
+  }
+
+  .sort-select {
+    padding: 0.55rem 1rem;
+    background: var(--sand);
+    border: 1px solid rgba(196,168,130,0.4);
+    border-radius: 2px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.82rem; color: var(--ink);
+    cursor: pointer; outline: none;
+  }
+
+  /* MAIN LAYOUT */
+  .shop-layout {
+    display: grid;
+    grid-template-columns: 260px 1fr;
+    gap: 0;
+    min-height: 80vh;
+  }
+
+  /* FILTERS SIDEBAR */
+  .filters {
+    padding: 2.5rem 2rem;
+    border-right: 1px solid rgba(196,168,130,0.2);
+    background: var(--white);
+    position: sticky; top: 80px;
+    align-self: start;
+    height: calc(100vh - 80px);
+    overflow-y: auto;
+  }
+
+  .filter-title {
+    font-size: 0.7rem; font-weight: 500;
+    letter-spacing: 0.15em; text-transform: uppercase;
+    color: var(--clay); margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid rgba(196,168,130,0.2);
+  }
+
+  .filter-group { margin-bottom: 2rem; }
+
+  .filter-group-title {
+    font-size: 0.82rem; font-weight: 500;
+    color: var(--ink); margin-bottom: 0.75rem;
+    display: flex; align-items: center; justify-content: space-between;
+    cursor: pointer;
+  }
+
+  .filter-options { display: flex; flex-direction: column; gap: 0.5rem; }
+
+  .filter-option {
+    display: flex; align-items: center; gap: 0.6rem;
+    font-size: 0.85rem; color: var(--smoke);
+    cursor: pointer; transition: color 0.15s;
+  }
+  .filter-option:hover { color: var(--ink); }
+
+  .filter-checkbox {
+    width: 14px; height: 14px;
+    border: 1px solid rgba(196,168,130,0.6);
+    border-radius: 2px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; transition: all 0.15s;
+  }
+  .filter-option.checked .filter-checkbox {
+    background: var(--ink); border-color: var(--ink);
+  }
+  .filter-option.checked .filter-checkbox::after {
+    content: '';
+    width: 3px; height: 6px;
+    border-right: 2px solid white;
+    border-bottom: 2px solid white;
+    transform: rotate(45deg);
+    margin-bottom: 1px;
+  }
+
+  .filter-count {
+    margin-left: auto;
+    font-size: 0.72rem; color: var(--clay);
+  }
+
+  .price-range {
+    display: flex; gap: 0.5rem; align-items: center;
+    margin-top: 0.5rem;
+  }
+  .price-input {
+    width: 80px; padding: 0.45rem 0.6rem;
+    background: var(--sand);
+    border: 1px solid rgba(196,168,130,0.4);
+    border-radius: 2px; font-size: 0.82rem;
+    font-family: 'DM Sans', sans-serif; color: var(--ink);
+    outline: none;
+  }
+  .price-sep { color: var(--clay); font-size: 0.8rem; }
+
+  .clear-filters {
+    font-size: 0.78rem; font-weight: 500;
+    color: var(--rust); cursor: pointer;
+    text-decoration: underline; text-underline-offset: 3px;
+    background: none; border: none;
+    padding: 0; margin-top: 0.5rem;
+  }
+
+  /* PRODUCT AREA */
+  .products-area { padding: 2.5rem 3rem; }
+
+  .active-filters {
+    display: flex; gap: 0.5rem; flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+
+  .active-filter-tag {
+    display: flex; align-items: center; gap: 0.4rem;
+    padding: 0.35rem 0.75rem;
+    background: rgba(184,92,58,0.1);
+    border: 1px solid rgba(184,92,58,0.25);
+    border-radius: 100px;
+    font-size: 0.75rem; font-weight: 500;
+    color: var(--rust); cursor: pointer;
+  }
+  .active-filter-tag span { font-size: 0.85rem; }
+
+  /* PRODUCT GRID */
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 2rem;
+  }
+
+  .product-card {
+    cursor: pointer;
+    transition: transform 0.25s;
+  }
+  .product-card:hover { transform: translateY(-4px); }
+
+  .product-img {
+    background: var(--sand);
+    border-radius: 4px;
+    aspect-ratio: 3/4;
+    position: relative;
+    overflow: hidden;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 4rem;
+    margin-bottom: 1rem;
+    transition: background 0.3s;
+  }
+  .product-card:hover .product-img { background: #DDD5C4; }
+
+  .product-badge {
+    position: absolute; top: 12px; left: 12px;
+    background: var(--rust); color: white;
+    font-size: 0.65rem; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    padding: 0.2rem 0.55rem; border-radius: 2px;
+  }
+
+  .product-save {
+    position: absolute; top: 12px; right: 12px;
+    width: 32px; height: 32px;
+    background: white; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; opacity: 0; transition: opacity 0.2s;
+    font-size: 1rem;
+  }
+  .product-card:hover .product-save { opacity: 1; }
+
+  .product-condition {
+    display: inline-block;
+    font-size: 0.65rem; font-weight: 500;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--forest);
+    background: rgba(45,74,62,0.1);
+    padding: 0.2rem 0.55rem; border-radius: 2px;
+    margin-bottom: 0.5rem;
+  }
+
+  .product-name {
+    font-size: 0.95rem; font-weight: 500;
+    color: var(--ink); margin-bottom: 0.2rem;
+  }
+
+  .product-seller {
+    font-size: 0.75rem; color: var(--smoke);
+    margin-bottom: 0.25rem;
+  }
+
+  .product-price {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.15rem; font-weight: 700; color: var(--ink);
+  }
+  .product-price .original {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.78rem; font-weight: 400;
+    color: var(--smoke); text-decoration: line-through;
+    margin-left: 0.4rem;
+  }
+  .product-price .save-pct {
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.72rem; font-weight: 500;
+    color: var(--rust); margin-left: 0.4rem;
+  }
+
+  /* PAGINATION */
+  .pagination {
+    display: flex; align-items: center; justify-content: center;
+    gap: 0.5rem; padding: 3rem 0 1rem;
+  }
+
+  .halaman-btn {
+    width: 36px; height: 36px;
+    border: 1px solid rgba(196,168,130,0.4);
+    border-radius: 2px; background: transparent;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.85rem; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    color: var(--smoke); transition: all 0.15s;
+  }
+  .halaman-btn:hover { border-color: var(--ink); color: var(--ink); }
+  .halaman-btn.active { background: var(--ink); color: var(--cream); border-color: var(--ink); }
+  .halaman-btn.arrow { font-size: 1rem; }
+
+  /* PROMO BANNER */
+  .promo-banner {
+    background: var(--forest); color: var(--cream);
+    padding: 2rem 3rem;
+    display: flex; align-items: center; justify-content: space-between;
+    border-radius: 4px; margin-bottom: 2rem;
+  }
+
+  .promo-text { font-size: 0.95rem; font-weight: 300; }
+  .promo-text strong { font-weight: 500; font-family: 'Playfair Display', serif; font-size: 1.05rem; }
+
+  .btn-promo {
+    background: var(--clay); color: var(--ink);
+    border: none; padding: 0.65rem 1.5rem;
+    font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem; font-weight: 500;
+    letter-spacing: 0.06em; text-transform: uppercase;
+    border-radius: 2px; cursor: pointer; white-space: nowrap;
+    transition: all 0.2s;
+  }
+  .btn-promo:hover { background: var(--cream); }
+
+  
+  footer {
+    background: var(--ink);
+    padding: 1.5rem 5rem;
+  }
+  .footer-bottom {
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .footer-copy { font-size: 0.78rem; color: rgba(245,240,232,0.3); }
+
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <a class="nav-logo" href="thrift-fashion.html">ECO<span>THRIFT</span></a>
+  <ul class="nav-links">
+    <li><a href="thrift-fashion.html">Laman Utama</a></li>
+    <li><a href="ecothrift-clothes.html" class="active">Pakaian</a></li>
+    <li><a href="ecothrift-pants.html">Seluar</a></li>
+    <li><a href="ecothrift-accessories.html">Aksesori</a></li>
+    <li><a href="ecothrift-sell.html">Jual</a></li>
+    <li><a href="kegemaran.html">❤ Kegemaran</a></li>
+  </ul>
+  <div class="nav-actions">
+    <a href="chat.html" style="font-size:.82rem;font-weight:500;letter-spacing:.08em;text-transform:uppercase;color:var(--smoke);text-decoration:none;" onmouseover="this.style.color='var(--ink)'" onmouseout="this.style.color='var(--smoke)'">💬 Chat</a>
+    <div class="cart-icon">🛍
+      <div class="cart-badge">3</div>
+    </div>
+    <a href="signin.html" class="btn-nav" id="nav-signin-btn" style="text-decoration:none;">Log Masuk</a>
+  </div>
+</nav>
+
+<!-- PAGE HEADER -->
+<div class="halaman-header">
+  <div class="breadcrumb">
+    <a href="thrift-fashion.html">Laman Utama</a>
+    <span>›</span>
+    <span style="color: var(--ink);">Pakaian</span>
+  </div>
+  <div class="halaman-header-inner">
+    <h1 class="halaman-title">Pre-loved <em>Pakaian</em></h1>
+    <div class="halaman-meta">
+            <select class="sort-select" id="sort-select">
+        <option value="recent">Terbaru Dahulu</option>
+        <option value="price-asc">Harga: Rendah ke Tinggi</option>
+        <option value="price-desc">Harga: Tinggi ke Rendah</option>
+        <option value="popular">Paling Popular</option>
+        <option value="condition">Keadaan Terbaik</option>
+      </select>
+    </div>
+  </div>
+</div>
+<!-- SHOP LAYOUT -->
+<div class="shop-layout">
+
+  <!-- SIDEBAR FILTERS -->
+  <aside class="filters">
+    <div class="filter-title">Penapis</div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Keadaan <span>▾</span></div>
+      <div class="filter-options">
+        <label class="filter-option" data-filter="condition" data-value="Seperti Baru">
+          <div class="filter-checkbox"></div>
+          Seperti Baru
+        </label>
+        <label class="filter-option" data-filter="condition" data-value="Cemerlang">
+          <div class="filter-checkbox"></div>
+          Cemerlang
+        </label>
+        <label class="filter-option" data-filter="condition" data-value="Baik">
+          <div class="filter-checkbox"></div>
+          Baik
+        </label>
+        <label class="filter-option" data-filter="condition" data-value="Sederhana">
+          <div class="filter-checkbox"></div>
+          Sederhana
+        </label>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Julat Harga <span>▾</span></div>
+      <div class="price-range">
+        <input type="number" id="price-min" class="price-input" placeholder="RM 0" value="0">
+        <span class="price-sep">—</span>
+        <input type="number" id="price-max" class="price-input" placeholder="RM 500" value="500">
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Saiz <span>▾</span></div>
+      <div class="filter-options">
+        <label class="filter-option" data-filter="size" data-value="XS">
+          <div class="filter-checkbox"></div>
+          XS
+        </label>
+        <label class="filter-option" data-filter="size" data-value="S">
+          <div class="filter-checkbox"></div>
+          S
+        </label>
+        <label class="filter-option" data-filter="size" data-value="M">
+          <div class="filter-checkbox"></div>
+          M
+        </label>
+        <label class="filter-option" data-filter="size" data-value="L">
+          <div class="filter-checkbox"></div>
+          L
+        </label>
+        <label class="filter-option" data-filter="size" data-value="XL">
+          <div class="filter-checkbox"></div>
+          XL
+        </label>
+        <label class="filter-option" data-filter="size" data-value="XXL">
+          <div class="filter-checkbox"></div>
+          XXL
+        </label>
+      </div>
+    </div>
+
+    <div class="filter-group">
+      <div class="filter-group-title">Warna <span>▾</span></div>
+      <div style="display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px;">
+        <div data-filter="color" data-value="hitam" style="width:24px;height:24px;border-radius:50%;background:#1A1A18;cursor:pointer;" title="Hitam"></div>
+        <div data-filter="color" data-value="putih" style="width:24px;height:24px;border-radius:50%;background:#FEFCF8;cursor:pointer;border:2px solid #ddd;" title="Putih"></div>
+        <div data-filter="color" data-value="merah" style="width:24px;height:24px;border-radius:50%;background:#B85C3A;cursor:pointer;" title="Merah"></div>
+        <div data-filter="color" data-value="hijau" style="width:24px;height:24px;border-radius:50%;background:#2D4A3E;cursor:pointer;" title="Hijau"></div>
+        <div data-filter="color" data-value="coklat" style="width:24px;height:24px;border-radius:50%;background:#C4A882;cursor:pointer;" title="Coklat"></div>
+        <div data-filter="color" data-value="kelabu" style="width:24px;height:24px;border-radius:50%;background:#7A7568;cursor:pointer;" title="Kelabu"></div>
+        <div data-filter="color" data-value="biru" style="width:24px;height:24px;border-radius:50%;background:#4A6FA5;cursor:pointer;" title="Biru"></div>
+        <div data-filter="color" data-value="ros" style="width:24px;height:24px;border-radius:50%;background:#E8C5B0;cursor:pointer;" title="Ros"></div>
+      </div>
+    </div>
+
+    <button class="clear-filters">Kosongkan Semua Penapis</button>
+  </aside>
+
+  <!-- PRODUCTS AREA -->
+  <div class="products-area">
+
+    <div class="active-filters"></div>
+
+    <div class="product-grid">
+
+      <div class="product-card" data-condition="Seperti Baru" data-price="145" data-size="M" data-color="merah" data-negeri="Selangor" data-seller="Aiman Razali" data-seller-id="mock_s1">
+        <div class="product-img">
+          <img src="baju1.png" alt="Manchester United Away Jersey" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-badge">Baru</div>
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Seperti Baru</div>
+        <div class="product-name">Manchester United Away Jersey — Adidas</div>
+        <div class="product-seller">👤 Aiman Razali</div>
+        <div class="product-price">RM 145 <span class="original">RM 520</span><span class="save-pct">−72%</span></div>
+      </div>
+
+      <div class="product-card" data-condition="Cemerlang" data-price="88" data-size="M" data-color="hitam" data-negeri="Kuala Lumpur" data-seller="Hafeez Ahmad" data-seller-id="mock_s2">
+        <div class="product-img">
+          <img src="baju2.png" alt="Germany Away Jersey" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Cemerlang</div>
+        <div class="product-name">Germany Away Jersey — Adidas Hitam</div>
+        <div class="product-seller">👤 Hafeez Ahmad</div>
+        <div class="product-price">RM 88 <span class="original">RM 310</span><span class="save-pct">−72%</span></div>
+      </div>
+
+      <div class="product-card" data-condition="Seperti Baru" data-price="75" data-size="S" data-color="putih" data-negeri="Johor" data-seller="Nur Liyana" data-seller-id="mock_s3">
+        <div class="product-img">
+          <img src="baju3.png" alt="Portugal Away Jersey" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-badge">Baru</div>
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Seperti Baru</div>
+        <div class="product-name">Portugal Away Jersey — Nike Jalur</div>
+        <div class="product-seller">👤 Nur Liyana</div>
+        <div class="product-price">RM 75 <span class="original">RM 260</span><span class="save-pct">−71%</span></div>
+      </div>
+
+      <div class="product-card" data-condition="Cemerlang" data-price="110" data-size="L" data-color="putih" data-negeri="Pulau Pinang" data-seller="Farah Izzati" data-seller-id="mock_s4">
+        <div class="product-img">
+          <img src="baju4.png" alt="England Home Jersey" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Cemerlang</div>
+        <div class="product-name">England Home Jersey No.20 — Umbro</div>
+        <div class="product-seller">👤 Farah Izzati</div>
+        <div class="product-price">RM 110 <span class="original">RM 390</span><span class="save-pct">−72%</span></div>
+      </div>
+
+      <div class="product-card" data-condition="Baik" data-price="190" data-size="L" data-color="merah" data-negeri="Selangor" data-seller="Syafiqah Noor" data-seller-id="mock_s6">
+        <div class="product-img">
+          <img src="baju5.png" alt="PSV Eindhoven Jersey" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-badge">Baru</div>
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Baik</div>
+        <div class="product-name">PSV Eindhoven Home Jersey — Adidas Philips</div>
+        <div class="product-seller">👤 Syafiqah Noor</div>
+        <div class="product-price">RM 190 <span class="original">RM 650</span><span class="save-pct">−71%</span></div>
+      </div>
+
+      <div class="product-card" data-condition="Seperti Baru" data-price="32" data-size="S" data-color="merah" data-negeri="Kuala Lumpur" data-seller="Daniel Azri" data-seller-id="mock_s7">
+        <div class="product-img">
+          <img src="baju1.png" alt="Manchester United Away Jersey" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Seperti Baru</div>
+        <div class="product-name">Manchester United Away Jersey — Hitam</div>
+        <div class="product-seller">👤 Daniel Azri</div>
+        <div class="product-price">RM 32 <span class="original">RM 95</span><span class="save-pct">−66%</span></div>
+      </div>
+
+      <div class="product-card" data-condition="Cemerlang" data-price="68" data-size="M" data-color="hitam" data-negeri="Perak" data-seller="Rizwan Haris" data-seller-id="mock_s5">
+        <div class="product-img">
+          <img src="baju2.png" alt="Germany Away Jersey" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-badge">Baru</div>
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Cemerlang</div>
+        <div class="product-name">Germany Away Jersey — Kolar Merah Emas</div>
+        <div class="product-seller">👤 Rizwan Haris</div>
+        <div class="product-price">RM 68 <span class="original">RM 220</span><span class="save-pct">−69%</span></div>
+      </div>
+
+      <div class="product-card" data-condition="Baik" data-price="95" data-size="M" data-color="putih" data-negeri="Selangor" data-seller="Aiman Razali" data-seller-id="mock_s1">
+        <div class="product-img">
+          <img src="baju3.png" alt="Portugal Away Jersey" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Baik</div>
+        <div class="product-name">Portugal Away Jersey — Putih Jalur Hijau</div>
+        <div class="product-seller">👤 Aiman Razali</div>
+        <div class="product-price">RM 95 <span class="original">RM 299</span><span class="save-pct">−68%</span></div>
+      </div>
+
+      <div class="product-card" data-condition="Seperti Baru" data-price="55" data-size="L" data-color="putih" data-negeri="Johor" data-seller="Aina Sofea" data-seller-id="mock_s8">
+        <div class="product-img">
+          <img src="baju4.png" alt="England Home Jersey" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-badge">Baru</div>
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Seperti Baru</div>
+        <div class="product-name">England Home Jersey — Umbro Vintaj</div>
+        <div class="product-seller">👤 Aina Sofea</div>
+        <div class="product-price">RM 55 <span class="original">RM 180</span><span class="save-pct">−69%</span></div>
+      </div>
+
+      <!-- PAGE 2 CARDS -->
+      <div class="product-card" data-page="2" data-condition="Cemerlang" data-price="95" data-size="M" data-color="coklat" data-negeri="Kuala Lumpur" data-seller="Hafeez Ahmad" data-seller-id="mock_s2" style="display:none;">
+        <div class="product-img">
+          <img src="baju6.png" alt="Ralph Lauren Yellow Polo" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-badge">Baru</div>
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Cemerlang</div>
+        <div class="product-name">Ralph Lauren Long Sleeve Polo — Kuning</div>
+        <div class="product-seller">👤 Hafeez Ahmad</div>
+        <div class="product-price">RM 95 <span class="original">RM 320</span><span class="save-pct">−70%</span></div>
+      </div>
+
+      <div class="product-card" data-page="2" data-condition="Seperti Baru" data-price="185" data-size="S" data-color="biru" data-negeri="Selangor" data-seller="Syafiqah Noor" data-seller-id="mock_s6" style="display:none;">
+        <div class="product-img">
+          <img src="baju7.png" alt="Japan Puma Jersey" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Seperti Baru</div>
+        <div class="product-name">Japan Home Jersey 1998 — Puma Flame</div>
+        <div class="product-seller">👤 Syafiqah Noor</div>
+        <div class="product-price">RM 185 <span class="original">RM 580</span><span class="save-pct">−68%</span></div>
+      </div>
+
+      <div class="product-card" data-page="2" data-condition="Cemerlang" data-price="210" data-size="M" data-color="hijau" data-negeri="Melaka" data-seller="Hafizuddin" data-seller-id="mock_s9" style="display:none;">
+        <div class="product-img">
+          <img src="baju8.png" alt="Germany Adidas Teal Jersey" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-badge">Baru</div>
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Cemerlang</div>
+        <div class="product-name">Germany Away Jersey 1996 — Adidas Teal</div>
+        <div class="product-seller">👤 Hafizuddin</div>
+        <div class="product-price">RM 210 <span class="original">RM 650</span><span class="save-pct">−68%</span></div>
+      </div>
+
+      <div class="product-card" data-page="2" data-condition="Baik" data-price="130" data-size="L" data-color="hitam" data-negeri="Pulau Pinang" data-seller="Farah Izzati" data-seller-id="mock_s4" style="display:none;">
+        <div class="product-img">
+          <img src="baju9.png" alt="Nike Track Jacket Black" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Baik</div>
+        <div class="product-name">Nike Track Jacket — Hitam Swoosh Besar</div>
+        <div class="product-seller">👤 Farah Izzati</div>
+        <div class="product-price">RM 130 <span class="original">RM 420</span><span class="save-pct">−69%</span></div>
+      </div>
+
+      <div class="product-card" data-page="2" data-condition="Seperti Baru" data-price="145" data-size="M" data-color="biru" data-negeri="Selangor" data-seller="Aiman Razali" data-seller-id="mock_s1" style="display:none;">
+        <div class="product-img">
+          <img src="baju10.png" alt="Nike Track Jacket Navy" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-badge">Baru</div>
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Seperti Baru</div>
+        <div class="product-name">Nike Track Jacket — Navy Putih Merah</div>
+        <div class="product-seller">👤 Aiman Razali</div>
+        <div class="product-price">RM 145 <span class="original">RM 460</span><span class="save-pct">−68%</span></div>
+      </div>
+
+      <div class="product-card" data-page="2" data-condition="Cemerlang" data-price="160" data-size="L" data-color="putih" data-negeri="Kuala Lumpur" data-seller="Daniel Azri" data-seller-id="mock_s7" style="display:none;">
+        <div class="product-img">
+          <img src="baju11.png" alt="Stussy LDH Hoodie" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Cemerlang</div>
+        <div class="product-name">Stussy x LDH Studio Hoodie — Putih</div>
+        <div class="product-seller">👤 Daniel Azri</div>
+        <div class="product-price">RM 160 <span class="original">RM 510</span><span class="save-pct">−69%</span></div>
+      </div>
+
+      <div class="product-card" data-page="2" data-condition="Cemerlang" data-price="90" data-size="S" data-color="hijau" data-negeri="Johor" data-seller="Nur Liyana" data-seller-id="mock_s3" style="display:none;">
+        <div class="product-img">
+          <img src="baju12.png" alt="Ralph Lauren Green Polo" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-badge">Baru</div>
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Cemerlang</div>
+        <div class="product-name">Ralph Lauren Long Sleeve Polo — Hijau</div>
+        <div class="product-seller">👤 Nur Liyana</div>
+        <div class="product-price">RM 90 <span class="original">RM 300</span><span class="save-pct">−70%</span></div>
+      </div>
+
+      <div class="product-card" data-page="2" data-condition="Baik" data-price="75" data-size="M" data-color="putih" data-negeri="Kedah" data-seller="Amirah Zaid" data-seller-id="mock_s10" style="display:none;">
+        <div class="product-img">
+          <img src="baju13.png" alt="Baju Page 2" style="width:100%;height:100%;object-fit:cover;position:absolute;inset:0;">
+          <div class="product-save">♡</div>
+        </div>
+        <div class="product-condition">Baik</div>
+        <div class="product-name">Vintage Sportswear Tee — Koleksi Lama</div>
+        <div class="product-seller">👤 Amirah Zaid</div>
+        <div class="product-price">RM 75 <span class="original">RM 240</span><span class="save-pct">−69%</span></div>
+      </div>
+
+    </div>
+
+    <!-- PAGINATION -->
+    <div class="pagination">
+      <button class="halaman-btn arrow">‹</button>
+      <button class="halaman-btn active" data-page="1">1</button>
+      <button class="halaman-btn" data-page="2">2</button>
+      <button class="halaman-btn arrow">›</button>
+    </div>
+
+    <script>
+    (function() {
+      let activeConds = new Set(), activeSizes = new Set(), activeColors = new Set();
+      let priceMin = 0, priceMax = 99999, currentPage = 1;
+      let selectedNegeri = (JSON.parse(localStorage.getItem('eco_location') || 'null') || {}).name || null;
+      const condOpts = document.querySelectorAll('[data-filter="condition"]');
+      const sizeOpts = document.querySelectorAll('[data-filter="size"]');
+      const colorSwatches = document.querySelectorAll('[data-filter="color"]');
+      const priceMinEl = document.getElementById('price-min');
+      const priceMaxEl = document.getElementById('price-max');
+      const clearBtn = document.querySelector('.clear-filters');
+      const activeTagsEl = document.querySelector('.active-filters');
+      const paginationEl = document.querySelector('.pagination');
+      const pageBtns = document.querySelectorAll('.halaman-btn:not(.arrow)');
+      const arrowBtns = document.querySelectorAll('.halaman-btn.arrow');
+      const sortEl = document.getElementById('sort-select');
+
+      const TICK = '<svg width="9" height="7" viewBox="0 0 9 7" fill="none" xmlns="http://www.w3.org/2000/svg"><polyline points="1,3.5 3.5,6 8,1" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+      const COND_ORDER = { 'Seperti Baru': 1, 'Cemerlang': 2, 'Baik': 3, 'Sederhana': 4 };
+
+      function setCheck(opt, on) {
+        opt.classList.toggle('checked', on);
+        const cb = opt.querySelector('.filter-checkbox');
+        if (cb) cb.innerHTML = on ? TICK : '';
+      }
+
+      function isFiltering() {
+        return activeConds.size > 0 || activeSizes.size > 0 || activeColors.size > 0 || priceMin > 0 || priceMax < 99999 || selectedNegeri !== null;
+      }
+
+      function sortCards(grid) {
+        const sortVal = sortEl ? sortEl.value : 'recent';
+        if (sortVal === 'recent') return;
+        const cards = Array.from(grid.querySelectorAll('.product-card'));
+        cards.sort((a, b) => {
+          if (sortVal === 'price-asc')  return (parseFloat(a.dataset.price)||0) - (parseFloat(b.dataset.price)||0);
+          if (sortVal === 'price-desc') return (parseFloat(b.dataset.price)||0) - (parseFloat(a.dataset.price)||0);
+          if (sortVal === 'condition')  return (COND_ORDER[a.dataset.condition]||9) - (COND_ORDER[b.dataset.condition]||9);
+          if (sortVal === 'popular')    return (parseFloat(b.dataset.price)||0) - (parseFloat(a.dataset.price)||0);
+          return 0;
+        });
+        cards.forEach(c => grid.appendChild(c));
+      }
+
+      function applyFilters() {
+        const filtering = isFiltering();
+        const grid = document.querySelector('.product-grid');
+        if (grid) sortCards(grid);
+        document.querySelectorAll('.product-card').forEach(card => {
+          const condOk = activeConds.size === 0 || activeConds.has(card.dataset.condition || '');
+          const sizeOk = activeSizes.size === 0 || activeSizes.has(card.dataset.size || '');
+          const colorOk = activeColors.size === 0 || activeColors.has(card.dataset.color || '');
+          const priceOk = (parseFloat(card.dataset.price) || 0) >= priceMin && (parseFloat(card.dataset.price) || 0) <= priceMax;
+          const negeriOk = !selectedNegeri || card.dataset.negeri === selectedNegeri;
+          const pageOk = filtering || (parseInt(card.dataset.page) || 1) === currentPage;
+          card.style.display = (condOk && sizeOk && colorOk && priceOk && negeriOk && pageOk) ? '' : 'none';
+        });
+        if (paginationEl) paginationEl.style.display = filtering ? 'none' : '';
+        renderTags();
+      }
+
+      function renderTags() {
+        if (!activeTagsEl) return;
+        activeTagsEl.innerHTML = '';
+        activeConds.forEach(v => makeTag(v, () => { activeConds.delete(v); condOpts.forEach(o => { if(o.dataset.value===v) setCheck(o,false); }); applyFilters(); }));
+        activeSizes.forEach(v => makeTag(v, () => { activeSizes.delete(v); sizeOpts.forEach(o => { if(o.dataset.value===v) setCheck(o,false); }); applyFilters(); }));
+        activeColors.forEach(v => makeTag('Warna: '+v, () => { activeColors.delete(v); colorSwatches.forEach(s => { if(s.dataset.value===v) s.style.outline='none'; }); applyFilters(); }));
+        if (priceMin > 0 || priceMax < 99999) makeTag('RM'+priceMin+'–RM'+priceMax, () => { priceMin=0; priceMax=99999; priceMinEl&&(priceMinEl.value=0); priceMaxEl&&(priceMaxEl.value=500); applyFilters(); });
+        if (selectedNegeri) makeTag('📍 '+selectedNegeri, () => { selectedNegeri=null; localStorage.removeItem('eco_location'); if(typeof LOCATION!=='undefined') LOCATION.close(); applyFilters(); });
+      }
+
+      function makeTag(label, fn) {
+        const t = document.createElement('div');
+        t.className = 'active-filter-tag';
+        t.innerHTML = label + ' <span>×</span>';
+        t.addEventListener('click', fn);
+        activeTagsEl.appendChild(t);
+      }
+
+      condOpts.forEach(o => o.addEventListener('click', () => {
+        const v = o.dataset.value, on = !o.classList.contains('checked');
+        setCheck(o, on); on ? activeConds.add(v) : activeConds.delete(v); applyFilters();
+      }));
+      sizeOpts.forEach(o => o.addEventListener('click', () => {
+        const v = o.dataset.value, on = !o.classList.contains('checked');
+        setCheck(o, on); on ? activeSizes.add(v) : activeSizes.delete(v); applyFilters();
+      }));
+      colorSwatches.forEach(s => s.addEventListener('click', () => {
+        const v=s.dataset.value;
+        if (activeColors.has(v)) { activeColors.delete(v); s.style.outline='none'; }
+        else { activeColors.add(v); s.style.outline='2px solid var(--ink)'; s.style.outlineOffset='2px'; }
+        applyFilters();
+      }));
+
+      if (priceMinEl) priceMinEl.addEventListener('change', () => { priceMin=parseFloat(priceMinEl.value)||0; applyFilters(); });
+      if (priceMaxEl) priceMaxEl.addEventListener('change', () => { priceMax=parseFloat(priceMaxEl.value)||99999; applyFilters(); });
+      if (sortEl) sortEl.addEventListener('change', applyFilters);
+
+      if (clearBtn) clearBtn.addEventListener('click', () => {
+        activeConds.clear(); activeSizes.clear(); activeColors.clear();
+        priceMin=0; priceMax=99999; selectedNegeri=null;
+        condOpts.forEach(o=>setCheck(o,false));
+        sizeOpts.forEach(o=>setCheck(o,false));
+        colorSwatches.forEach(s=>{ s.style.outline='none'; });
+        priceMinEl&&(priceMinEl.value=0); priceMaxEl&&(priceMaxEl.value=500);
+        localStorage.removeItem('eco_location');
+        goToPage(1);
+      });
+
+      window.addEventListener('eco:locationChanged', (e) => {
+        selectedNegeri = e.detail.location ? e.detail.location.name : null;
+        applyFilters();
+      });
+
+      function goToPage(n) {
+        currentPage=n;
+        pageBtns.forEach(b=>b.classList.toggle('active', parseInt(b.dataset.page)===n));
+        applyFilters();
+        window.scrollTo({top:0, behavior:'smooth'});
+      }
+
+      pageBtns.forEach(b=>b.addEventListener('click',()=>goToPage(parseInt(b.dataset.page))));
+      if (arrowBtns.length>=2) {
+        arrowBtns[0].addEventListener('click',()=>{ if(currentPage>1) goToPage(currentPage-1); });
+        arrowBtns[1].addEventListener('click',()=>{ if(currentPage<pageBtns.length) goToPage(currentPage+1); });
+      }
+
+      applyFilters();
+    })();
+    </script>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer>
+  <div class="footer-bottom">
+    <div class="footer-copy">© 2026 Ecothrift. Hak cipta terpelihara.</div>
+    <div class="footer-copy">Privasi · Terma · Kuki</div>
+  </div>
+</footer>
+
+
+<script src="ecothrift.js"></script>
+<script src="location-selector.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="auth-nav.js"></script>
+<script>window.LISTING_CATEGORY = 'Pakaian';</script>
+<script src="load-listings.js"></script>
+</body>
+</html>
